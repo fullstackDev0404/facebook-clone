@@ -87,7 +87,7 @@ const RightSidebar = () => {
                         >
                             <div className="relative">
                                 <Avatar className="w-9 h-9">
-                                    <AvatarImage />
+                                    <AvatarImage className="" />
                                     <AvatarFallback className={`${avatarColors[i % avatarColors.length]} text-white text-xs font-bold`}>
                                         {contact.fallback}
                                     </AvatarFallback>

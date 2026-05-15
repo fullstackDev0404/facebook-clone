@@ -21,7 +21,7 @@ const LeftSidebar = () => {
             {/* Profile Link */}
             <button className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors w-full text-left">
                 <Avatar className="w-9 h-9">
-                    <AvatarImage />
+                    <AvatarImage className="" />
                     <AvatarFallback className="bg-blue-500 text-white font-bold">Y</AvatarFallback>
                 </Avatar>
                 <span className="font-medium text-sm dark:text-white">Your Name</span>

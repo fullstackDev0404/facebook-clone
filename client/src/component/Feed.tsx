@@ -90,7 +90,7 @@ const CreatePost = () => (
     <div className="bg-white dark:bg-[rgb(36,37,38)] rounded-xl shadow p-3">
         <div className="flex items-center gap-3 mb-3">
             <Avatar className="w-10 h-10">
-                <AvatarImage />
+                <AvatarImage className="" />
                 <AvatarFallback className="bg-blue-500 text-white font-bold">Y</AvatarFallback>
             </Avatar>
             <button className="flex-1 bg-gray-100 dark:bg-[rgb(58,59,60)] hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full px-4 py-2.5 text-left text-sm text-gray-500 dark:text-gray-400 transition-colors">
@@ -123,7 +123,7 @@ const PostCard = ({ post }: { post: typeof posts[0] }) => (
         <div className="flex items-center justify-between p-3">
             <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
-                    <AvatarImage />
+                    <AvatarImage className="" />
                     <AvatarFallback className={`${post.color} text-white font-bold text-sm`}>
                         {post.fallback}
                     </AvatarFallback>

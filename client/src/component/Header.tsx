@@ -35,7 +35,7 @@ const Header = () => {
                             <p className="text-xs text-gray-500 px-2 py-1">Recent searches</p>
                             <div className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
                                 <Avatar className="w-8 h-8">
-                                    <AvatarImage />
+                                    <AvatarImage className="" />
                                     <AvatarFallback className="bg-blue-500 text-white text-xs">JK</AvatarFallback>
                                 </Avatar>
                                 <span className="text-sm dark:text-white">Joana Kelly</span>
@@ -83,7 +83,7 @@ const Header = () => {
                 </button>
                 <button className="flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-gray-700 p-1 rounded-full transition-colors">
                     <Avatar className="w-9 h-9">
-                        <AvatarImage />
+                        <AvatarImage className="" />
                         <AvatarFallback className="bg-blue-500 text-white text-sm font-bold">Y</AvatarFallback>
                     </Avatar>
                     <ChevronDown className="w-4 h-4 text-gray-500 hidden lg:block" />
