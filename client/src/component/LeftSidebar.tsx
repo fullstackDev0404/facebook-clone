@@ -2,6 +2,10 @@
 import React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Users, Clock, Bookmark, Flag, ChevronDown, Store, Tv, Gamepad2, CalendarDays } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+
+const getInitials = (name: string) =>
+    name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
 const shortcuts = [
     { icon: Users, label: 'Friends', color: 'text-blue-500' },
@@ -15,16 +19,19 @@ const shortcuts = [
 ]
 
 const LeftSidebar = () => {
+    const { user } = useAuth()
+    const initials = getInitials(user?.name || '')
+
     return (
-        <aside className="hidden lg:flex flex-col w-[280px] h-[calc(100vh-56px)] sticky top-14 overflow-y-auto p-2 scrollbar-hide">
+        <aside className="hidden lg:flex flex-col w-70 h-[calc(100vh-56px)] sticky top-14 overflow-y-auto p-2 scrollbar-hide">
 
             {/* Profile Link */}
             <button className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors w-full text-left">
                 <Avatar className="w-9 h-9">
                     <AvatarImage className="" />
-                    <AvatarFallback className="bg-blue-500 text-white font-bold">Y</AvatarFallback>
+                    <AvatarFallback className="bg-blue-500 text-white font-bold">{initials}</AvatarFallback>
                 </Avatar>
-                <span className="font-medium text-sm dark:text-white">Your Name</span>
+                <span className="font-medium text-sm dark:text-white">{user?.name || 'Your Name'}</span>
             </button>
 
             {/* Shortcuts */}

@@ -1,7 +1,7 @@
 "use client"
 import React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Image, Video, Smile, ThumbsUp, MessageCircle, Share2, MoreHorizontal, Plus } from 'lucide-react'
+import { ImageIcon, Video, Smile, ThumbsUp, MessageCircle, Share2, MoreHorizontal, Plus } from 'lucide-react'
 
 // ─── Dummy Data ───────────────────────────────────────────────────────────────
 
@@ -56,11 +56,11 @@ const StoriesRow = () => (
         {stories.map((story, i) => (
             <div
                 key={story.name}
-                className="relative flex-shrink-0 w-24 h-40 rounded-xl overflow-hidden cursor-pointer group"
+                className="relative shrink-0 w-24 h-40 rounded-xl overflow-hidden cursor-pointer group"
             >
                 {/* Background gradient */}
                 <div className={`absolute inset-0 ${story.color} opacity-80`} />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
+                <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/50" />
 
                 {/* Avatar */}
                 <div className="absolute top-3 left-3">
@@ -104,7 +104,7 @@ const CreatePost = () => (
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Live video</span>
             </button>
             <button className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-1 justify-center">
-                <Image className="w-5 h-5 text-green-500" />
+                <ImageIcon className="w-5 h-5 text-green-500" />
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-300 hidden sm:inline">Photo/video</span>
             </button>
             <button className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors flex-1 justify-center">

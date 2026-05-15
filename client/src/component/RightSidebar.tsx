@@ -30,14 +30,14 @@ const RightSidebar = () => {
     )
 
     return (
-        <aside className="hidden xl:flex flex-col w-[280px] h-[calc(100vh-56px)] sticky top-14 overflow-y-auto p-2 scrollbar-hide">
+        <aside className="hidden xl:flex flex-col w-70 h-[calc(100vh-56px)] sticky top-14 overflow-y-auto p-2 scrollbar-hide">
 
             {/* Sponsored */}
             <div className="mb-4">
                 <h3 className="text-gray-500 dark:text-gray-400 font-semibold text-sm px-2 mb-2">Sponsored</h3>
                 <div className="flex gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer transition-colors">
-                    <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-lg flex-shrink-0 overflow-hidden">
-                        <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500" />
+                    <div className="w-28 h-28 bg-gray-200 dark:bg-gray-600 rounded-lg shrink-0 overflow-hidden">
+                        <div className="w-full h-full bg-linear-to-br from-blue-400 to-purple-500" />
                     </div>
                     <div>
                         <p className="text-sm font-medium dark:text-white">Sponsored Ad</p>
