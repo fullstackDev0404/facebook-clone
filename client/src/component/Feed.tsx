@@ -1,5 +1,5 @@
 "use client"
-import React, { useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -37,29 +37,6 @@ const stories = [
     { name: 'Bob S.',     fallback: 'BS', color: 'bg-green-500' },
     { name: 'Carol W.',   fallback: 'CW', color: 'bg-purple-500' },
     { name: 'David L.',   fallback: 'DL', color: 'bg-orange-500' },
-]
-
-const DUMMY_POSTS: PostRecord[] = [
-    {
-        id: '1',
-        author: { id: 'a1', firstName: 'Alice', lastName: 'Johnson', avatar: null },
-        authorId: 'a1',
-        content: 'Just had an amazing day at the beach! 🌊☀️ The weather was perfect and the vibes were immaculate.',
-        image: null,
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString(),
-        _count: { likes: 42, comments: 8 },
-    },
-    {
-        id: '2',
-        author: { id: 'a2', firstName: 'Bob', lastName: 'Smith', avatar: null },
-        authorId: 'a2',
-        content: 'Finally finished my side project after 3 months of work. Shipping is the best feeling in the world. 🚀',
-        image: null,
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString(),
-        _count: { likes: 128, comments: 24 },
-    },
 ]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -352,7 +329,49 @@ const PostCard = ({ post }: { post: PostRecord }) => {
 // ─── Feed ─────────────────────────────────────────────────────────────────────
 
 const Feed = () => {
-    const [posts, setPosts] = useState<PostRecord[]>(DUMMY_POSTS)
+    const [posts, setPosts]           = useState<PostRecord[]>([])
+    const [page, setPage]             = useState(1)
+    const [hasNextPage, setHasNextPage] = useState(true)
+    const [loadingFeed, setLoadingFeed] = useState(true)
+    const [loadingMore, setLoadingMore] = useState(false)
+    const [feedError, setFeedError]   = useState<string | null>(null)
+
+    // Sentinel ref for IntersectionObserver-based infinite scroll
+    const sentinelRef = useRef<HTMLDivElement>(null)
+
+    const loadPage = useCallback(async (pageNum: number) => {
+        try {
+            const data = await postsApi.getFeed({ page: pageNum, limit: 10 })
+            setPosts((prev) => pageNum === 1 ? data.posts : [...prev, ...data.posts])
+            setHasNextPage(data.pagination.hasNextPage)
+            setPage(pageNum)
+        } catch (err: unknown) {
+            const msg = err instanceof Error ? err.message : 'Failed to load feed.'
+            setFeedError(msg)
+        }
+    }, [])
+
+    // Initial load
+    useEffect(() => {
+        setLoadingFeed(true)
+        loadPage(1).finally(() => setLoadingFeed(false))
+    }, [loadPage])
+
+    // Infinite scroll — observe sentinel
+    useEffect(() => {
+        if (!sentinelRef.current) return
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasNextPage && !loadingMore && !loadingFeed) {
+                    setLoadingMore(true)
+                    loadPage(page + 1).finally(() => setLoadingMore(false))
+                }
+            },
+            { threshold: 0.1 }
+        )
+        observer.observe(sentinelRef.current)
+        return () => observer.disconnect()
+    }, [hasNextPage, loadingMore, loadingFeed, page, loadPage])
 
     const handlePostCreated = (newPost: PostRecord) => {
         setPosts((prev) => [newPost, ...prev])
@@ -362,9 +381,62 @@ const Feed = () => {
         <div className="max-w-xl mx-auto space-y-4">
             <StoriesRow />
             <CreatePost onPostCreated={handlePostCreated} />
-            {posts.map((post) => (
+
+            {/* Initial load skeleton */}
+            {loadingFeed && (
+                <div className="space-y-4">
+                    {[1, 2, 3].map((n) => (
+                        <div key={n} className="bg-white dark:bg-[rgb(36,37,38)] rounded-xl shadow p-4 animate-pulse">
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700" />
+                                <div className="space-y-1.5 flex-1">
+                                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
+                                    <div className="h-2.5 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded" />
+                                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Feed error */}
+            {feedError && !loadingFeed && (
+                <div className="bg-white dark:bg-[rgb(36,37,38)] rounded-xl shadow p-6 text-center">
+                    <p className="text-sm text-red-500 mb-3">{feedError}</p>
+                    <button
+                        onClick={() => { setFeedError(null); setLoadingFeed(true); loadPage(1).finally(() => setLoadingFeed(false)) }}
+                        className="text-sm text-blue-500 hover:underline"
+                    >
+                        Try again
+                    </button>
+                </div>
+            )}
+
+            {/* Posts */}
+            {!loadingFeed && posts.map((post) => (
                 <PostCard key={post.id} post={post} />
             ))}
+
+            {/* Empty state */}
+            {!loadingFeed && !feedError && posts.length === 0 && (
+                <div className="bg-white dark:bg-[rgb(36,37,38)] rounded-xl shadow p-8 text-center">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                        No posts yet. Be the first to share something!
+                    </p>
+                </div>
+            )}
+
+            {/* Infinite scroll sentinel + load-more spinner */}
+            <div ref={sentinelRef} className="flex justify-center py-4">
+                {loadingMore && <Loader2 className="w-6 h-6 animate-spin text-gray-400" />}
+                {!hasNextPage && posts.length > 0 && !loadingFeed && (
+                    <p className="text-xs text-gray-400">You&apos;re all caught up</p>
+                )}
+            </div>
         </div>
     )
 }

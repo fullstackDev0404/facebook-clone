@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const auth = require('../middleware/auth')
 const upload = require('../lib/upload')
-const { createPost } = require('../controllers/posts')
+const { createPost, getFeed } = require('../controllers/posts')
 
 // Handle multer errors (file type / size) before they reach the global error handler
 const handleUpload = (req, res, next) => {
@@ -15,6 +15,9 @@ const handleUpload = (req, res, next) => {
         return res.status(400).json({ error: err.message || 'Only image files are allowed' })
     })
 }
+
+// GET /api/posts/feed — paginated feed (own posts + accepted friends)
+router.get('/feed', auth, getFeed)
 
 // POST /api/posts — create a post (text + optional image)
 router.post('/', auth, handleUpload, createPost)

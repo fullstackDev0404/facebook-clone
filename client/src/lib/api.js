@@ -54,6 +54,13 @@ export const authApi = {
 // ── Posts ─────────────────────────────────────────────────────────────────────
 export const postsApi = {
     /**
+     * Fetch paginated feed.
+     * @param {{ page?: number, limit?: number }} params
+     */
+    getFeed: ({ page = 1, limit = 10 } = {}) =>
+        request(`/posts/feed?page=${page}&limit=${limit}`),
+
+    /**
      * Create a post with optional image.
      * @param {{ content?: string, image?: File | null }} params
      */
