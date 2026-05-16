@@ -51,4 +51,33 @@ export const authApi = {
     me: () => request('/auth/me'),
 }
 
+// ── Posts ─────────────────────────────────────────────────────────────────────
+export const postsApi = {
+    /**
+     * Create a post with optional image.
+     * @param {{ content?: string, image?: File | null }} params
+     */
+    create: ({ content, image }) => {
+        const token = getToken()
+        const form = new FormData()
+        if (content) form.append('content', content)
+        if (image)   form.append('image', image)
+
+        return fetch(`${BASE_URL}/posts`, {
+            method: 'POST',
+            headers: {
+                // Do NOT set Content-Type — browser sets it with the boundary
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: form,
+        }).then(async (res) => {
+            const data = await res.json().catch(() => ({}))
+            if (!res.ok) {
+                throw new ApiError(data.error || 'Something went wrong', res.status)
+            }
+            return data
+        })
+    },
+}
+
 export { ApiError }
