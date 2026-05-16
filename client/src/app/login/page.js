@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { validateLogin, inputCls } from '@/lib/validation'
 import { AuthLogo, AuthFooter, FieldError } from '@/component/auth/AuthLayout'
+import { authApi } from '@/lib/api'
 
 const LoginPage = () => {
     const router = useRouter()
@@ -24,10 +25,15 @@ const LoginPage = () => {
         if (Object.keys(errs).length > 0) return
 
         setLoading(true)
-        // Mock login — swap with real API call
-        await new Promise(r => setTimeout(r, 600))
-        login({ name: 'User', email })
-        router.push('/')
+        try {
+            const { token, user } = await authApi.login(email, password)
+            login(user, token)
+            router.push('/')
+        } catch (err) {
+            setErrors({ api: err.message })
+        } finally {
+            setLoading(false)
+        }
     }
 
     const e = (key) => submitted && errors[key]
@@ -47,6 +53,12 @@ const LoginPage = () => {
                 {/* Right — Login Card */}
                 <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm flex flex-col gap-4">
                     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3">
+                        {/* API error */}
+                        {errors.api && (
+                            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">
+                                {errors.api}
+                            </div>
+                        )}
                         <div>
                             <input
                                 type="text"

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { validateSignup, inputCls } from '@/lib/validation'
 import { AuthLogo, AuthFooter, FieldError } from '@/component/auth/AuthLayout'
+import { authApi } from '@/lib/api'
 
 const GENDERS = ['Female', 'Male', 'Custom']
 
@@ -30,9 +31,15 @@ const SignupPage = () => {
         if (Object.keys(errs).length > 0) return
 
         setLoading(true)
-        await new Promise(r => setTimeout(r, 600))
-        login({ name: `${fields.firstName} ${fields.lastName}`, email: fields.email })
-        router.push('/')
+        try {
+            const { token, user } = await authApi.register(fields)
+            login(user, token)
+            router.push('/')
+        } catch (err) {
+            setErrors({ api: err.message })
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -49,6 +56,12 @@ const SignupPage = () => {
                     <hr className="border-gray-200 mb-4" />
 
                     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3">
+                        {/* API error */}
+                        {errors.api && (
+                            <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">
+                                {errors.api}
+                            </div>
+                        )}
                         {/* Name */}
                         <div className="flex gap-2">
                             <div className="flex-1">
