@@ -252,10 +252,87 @@ const CreatePost = ({ onPostCreated }: CreatePostProps) => {
 
 // ─── Post Card ────────────────────────────────────────────────────────────────
 
-const PostCard = ({ post }: { post: PostRecord }) => {
+interface Comment {
+    id: string
+    content: string
+    createdAt: string
+    author: Author
+    replies?: Comment[]
+}
+
+const PostCard = ({ post: initialPost }: { post: PostRecord }) => {
+    const { user } = useAuth()
+    const [post, setPost] = useState(initialPost)
+    const [liked, setLiked] = useState(false)
+    const [showComments, setShowComments] = useState(false)
+    const [comments, setComments] = useState<Comment[]>([])
+    const [loadingComments, setLoadingComments] = useState(false)
+    const [commentText, setCommentText] = useState('')
+    const [submittingComment, setSubmittingComment] = useState(false)
+
     const name = `${post.author.firstName} ${post.author.lastName}`
     const fb   = initials(post.author.firstName, post.author.lastName)
     const API  = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') ?? 'http://localhost:5000'
+
+    const handleLike = async () => {
+        try {
+            if (liked) {
+                await postsApi.unlike(post.id)
+                setLiked(false)
+                setPost((p) => ({
+                    ...p,
+                    _count: { ...p._count, likes: Math.max(0, (p._count?.likes ?? 0) - 1) },
+                }))
+            } else {
+                await postsApi.like(post.id)
+                setLiked(true)
+                setPost((p) => ({
+                    ...p,
+                    _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1 },
+                }))
+            }
+        } catch (err) {
+            console.error('Failed to toggle like:', err)
+        }
+    }
+
+    const loadComments = async () => {
+        if (comments.length > 0) return // already loaded
+        setLoadingComments(true)
+        try {
+            const data = await postsApi.getComments(post.id)
+            setComments(data.comments ?? [])
+        } catch (err) {
+            console.error('Failed to load comments:', err)
+        } finally {
+            setLoadingComments(false)
+        }
+    }
+
+    const handleCommentClick = () => {
+        setShowComments((prev) => !prev)
+        if (!showComments) loadComments()
+    }
+
+    const handleSubmitComment = async () => {
+        const trimmed = commentText.trim()
+        if (!trimmed) return
+
+        setSubmittingComment(true)
+        try {
+            const data = await postsApi.createComment(post.id, { content: trimmed })
+            setComments((prev) => [...prev, data.comment])
+            setCommentText('')
+            setPost((p) => ({
+                ...p,
+                _count: { ...p._count, comments: (p._count?.comments ?? 0) + 1 },
+            }))
+        } catch (err) {
+            console.error('Failed to post comment:', err)
+        } finally {
+            setSubmittingComment(false)
+        }
+    }
 
     return (
         <div className="bg-white dark:bg-[rgb(36,37,38)] rounded-xl shadow">
@@ -308,20 +385,92 @@ const PostCard = ({ post }: { post: PostRecord }) => {
 
             {/* Actions */}
             <div className="flex items-center px-2 py-1">
-                {[
-                    { icon: <ThumbsUp className="w-5 h-5" />, label: 'Like' },
-                    { icon: <MessageCircle className="w-5 h-5" />, label: 'Comment' },
-                    { icon: <Share2 className="w-5 h-5" />, label: 'Share' },
-                ].map(({ icon, label }) => (
-                    <button
-                        key={label}
-                        className="flex items-center gap-2 flex-1 justify-center py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
-                    >
-                        {icon}
-                        <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{label}</span>
-                    </button>
-                ))}
+                <button
+                    onClick={handleLike}
+                    className={`flex items-center gap-2 flex-1 justify-center py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${
+                        liked ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                >
+                    <ThumbsUp className={`w-5 h-5 ${liked ? 'fill-current' : ''}`} />
+                    <span className="text-sm font-medium">{liked ? 'Liked' : 'Like'}</span>
+                </button>
+                <button
+                    onClick={handleCommentClick}
+                    className="flex items-center gap-2 flex-1 justify-center py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500 dark:text-gray-400"
+                >
+                    <MessageCircle className="w-5 h-5" />
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Comment</span>
+                </button>
+                <button className="flex items-center gap-2 flex-1 justify-center py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500 dark:text-gray-400">
+                    <Share2 className="w-5 h-5" />
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Share</span>
+                </button>
             </div>
+
+            {/* Comments section */}
+            {showComments && (
+                <div className="px-4 pb-3 border-t border-gray-100 dark:border-gray-700 pt-3">
+                    {/* Comment input */}
+                    <div className="flex items-start gap-2 mb-3">
+                        <Avatar className="w-8 h-8">
+                            <AvatarImage src={user?.avatar ?? undefined} />
+                            <AvatarFallback className="bg-blue-500 text-white text-xs font-bold">
+                                {user ? initials(user.firstName, user.lastName) : 'Y'}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 flex gap-2">
+                            <input
+                                type="text"
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
+                                placeholder="Write a comment..."
+                                className="flex-1 bg-gray-100 dark:bg-[rgb(58,59,60)] rounded-full px-4 py-2 text-sm outline-none dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                            />
+                            {commentText.trim() && (
+                                <button
+                                    onClick={handleSubmitComment}
+                                    disabled={submittingComment}
+                                    className="text-blue-500 hover:text-blue-600 disabled:opacity-50 text-sm font-semibold"
+                                >
+                                    {submittingComment ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Post'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Comments list */}
+                    {loadingComments && (
+                        <div className="flex justify-center py-4">
+                            <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                        </div>
+                    )}
+
+                    {!loadingComments && comments.length === 0 && (
+                        <p className="text-xs text-gray-400 text-center py-2">No comments yet. Be the first!</p>
+                    )}
+
+                    {!loadingComments && comments.map((comment) => (
+                        <div key={comment.id} className="flex items-start gap-2 mb-2">
+                            <Avatar className="w-8 h-8">
+                                <AvatarImage src={comment.author.avatar ? `${API}/${comment.author.avatar}` : undefined} />
+                                <AvatarFallback className="bg-gray-400 text-white text-xs font-bold">
+                                    {initials(comment.author.firstName, comment.author.lastName)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <div className="bg-gray-100 dark:bg-[rgb(58,59,60)] rounded-2xl px-3 py-2">
+                                    <p className="text-xs font-semibold dark:text-white">
+                                        {comment.author.firstName} {comment.author.lastName}
+                                    </p>
+                                    <p className="text-sm dark:text-gray-200">{comment.content}</p>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1 px-3">{timeAgo(comment.createdAt)}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }

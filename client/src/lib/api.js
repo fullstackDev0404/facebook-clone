@@ -85,6 +85,42 @@ export const postsApi = {
             return data
         })
     },
+
+    /**
+     * Add or update a reaction on a post.
+     * @param {string} postId
+     * @param {{ type?: string }} params — defaults to "like"
+     */
+    like: (postId, { type = 'like' } = {}) =>
+        request(`/posts/${postId}/like`, {
+            method: 'POST',
+            body: JSON.stringify({ type }),
+        }),
+
+    /**
+     * Remove reaction from a post.
+     * @param {string} postId
+     */
+    unlike: (postId) =>
+        request(`/posts/${postId}/like`, { method: 'DELETE' }),
+
+    /**
+     * Fetch all comments for a post.
+     * @param {string} postId
+     */
+    getComments: (postId) =>
+        request(`/posts/${postId}/comments`),
+
+    /**
+     * Create a comment or reply.
+     * @param {string} postId
+     * @param {{ content: string, parentId?: string }} params
+     */
+    createComment: (postId, { content, parentId }) =>
+        request(`/posts/${postId}/comments`, {
+            method: 'POST',
+            body: JSON.stringify({ content, parentId }),
+        }),
 }
 
 export { ApiError }
