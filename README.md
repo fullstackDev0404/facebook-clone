@@ -165,32 +165,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## Features Implemented
-
-### Day 1–2 — Layout & Auth UI
-- [x] 3-column homepage layout (Header, Left Sidebar, Feed, Right Sidebar)
-- [x] Login page with form validation
-- [x] Sign Up page with form validation
-- [x] Forgot Password page
-- [x] Auth context + protected routes
-
-### Day 3 — Backend Auth
-- [x] `POST /auth/register` — bcrypt password hashing
-- [x] `POST /auth/login` — JWT token issuance
-- [x] Auth middleware — JWT verification on protected routes
-
-### Day 4 — Posts & Feed
-- [x] `POST /posts` — create post with text + image (multer)
-- [x] `GET /posts/feed` — paginated feed (own posts + accepted friends)
-- [x] `POST /posts/:id/like` / `DELETE /posts/:id/like` — reactions
-- [x] `POST /posts/:id/comments` / `GET /posts/:id/comments` — comments
-- [x] Stories row (horizontal scroll)
-- [x] Create Post box — connected to real API
-- [x] Post card with Like, Comment, Share — connected to real API
-- [x] Infinite scroll feed with loading skeletons
-
----
-
 ## Scripts
 
 ### Server
