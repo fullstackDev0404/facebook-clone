@@ -1,0 +1,11 @@
+{
+  "pages": {},
+  "app": {
+    "[project]/src/app/login/page": [
+      "static/media/GeistVF-s.p.0-te~ja_gpvcf.woff2",
+      "static/media/GeistMonoVF-s.p.17jn9btb_52pq.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pagesUsingSizeAdjust": false
+}
