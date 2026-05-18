@@ -51,3 +51,21 @@
 {"timestamp":"03:15:36.813","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
 {"timestamp":"03:16:08.589","source":"Server","level":"LOG","message":"✓ Compiled in 121ms"}
 {"timestamp":"03:17:01.499","source":"Server","level":"LOG","message":"✓ Compiled in 750ms"}
+{"timestamp":"03:18:08.742","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:18:08.742","source":"Browser","level":"LOG","message":"Browsing Topics API removed from http://localhost:3000/ which is main frame"}
+{"timestamp":"03:18:09.251","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:18:09.251","source":"Browser","level":"LOG","message":"Browsing Topics API removed from http://localhost:3000/ which is main frame"}
+{"timestamp":"03:18:09.636","source":"Browser","level":"WARN","message":"Image with src \"http://localhost:5001/uploads/posts/1779066235690-771113810.png\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"}
+{"timestamp":"03:18:09.661","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mImage with src \\\"http://localhost:5001/uploads/posts/1779066235690-771113810.png\\\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\\\"eager\\\"` property if this image is above the fold.\\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\\u001b[39m\""}
+{"timestamp":"03:18:09.662","source":"Browser","level":"WARN","message":"\u001b[33mImage with src \"http://localhost:5001/uploads/posts/1779066235690-771113810.png\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\u001b[39m"}
+{"timestamp":"04:04:35.493","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"04:04:35.493","source":"Browser","level":"LOG","message":"Browsing Topics API removed from http://localhost:3000/ which is main frame"}
+{"timestamp":"04:42:36.911","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"04:42:36.911","source":"Browser","level":"LOG","message":"Browsing Topics API removed from http://localhost:3000/friends which is main frame"}
+{"timestamp":"04:43:39.879","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"04:43:39.893","source":"Browser","level":"LOG","message":"Browsing Topics API removed from http://localhost:3000/friends which is main frame"}
+{"timestamp":"05:13:09.257","source":"Server","level":"LOG","message":"✓ Compiled in 196ms"}
+{"timestamp":"05:13:36.667","source":"Server","level":"LOG","message":"✓ Compiled in 849ms"}
+{"timestamp":"05:13:57.063","source":"Server","level":"LOG","message":"✓ Compiled in 115ms"}
+{"timestamp":"05:14:18.795","source":"Server","level":"LOG","message":"✓ Compiled in 382ms"}
+{"timestamp":"05:14:46.107","source":"Server","level":"LOG","message":"✓ Compiled in 268ms"}
