@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import {
     Search, Home, Users, Tv, Store, Bell, MessageCircle,
-    Menu, LogOut, Settings, User, X, LayoutGrid,
+    Menu, LogOut, Settings, User, X,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
@@ -40,6 +40,16 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
         const handler = (e: MouseEvent) => {
             if (profileRef.current && !profileRef.current.contains(e.target as Node))
                 setProfileOpen(false)
+        }
+        document.addEventListener('mousedown', handler)
+        return () => document.removeEventListener('mousedown', handler)
+    }, [])
+
+    // Close notifications panel on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (notifRef.current && !notifRef.current.contains(e.target as Node))
+                setNotifOpen(false)
         }
         document.addEventListener('mousedown', handler)
         return () => document.removeEventListener('mousedown', handler)
@@ -120,17 +130,12 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                 </nav>
 
                 {/* Right: Actions */}
-                <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                <div className="flex items-center gap-3 shrink-0 ml-auto">
                     {/* Hamburger — mobile only */}
                     <button onClick={onMenuClick}
                         className="flex md:hidden items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full text-[#050505] dark:text-[#e4e6eb] transition-colors"
                         title="Menu">
                         <Menu className="w-5 h-5" />
-                    </button>
-
-                    {/* Grid menu */}
-                    <button className="flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full text-[#050505] dark:text-[#e4e6eb] transition-colors" title="Menu">
-                        <LayoutGrid className="w-5 h-5" />
                     </button>
 
                     {/* Messenger */}
@@ -148,7 +153,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                         >
                             <Bell className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
                             {unreadCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">
+                                <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">
                                     {unreadCount > 99 ? '99+' : unreadCount}
                                 </span>
                             )}
@@ -156,6 +161,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
                         {notifOpen && (
                             <NotificationsPanel
+                                panelRef={notifRef}
                                 onClose={() => {
                                     setNotifOpen(false)
                                     setUnreadCount(0)

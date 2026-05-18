@@ -62,7 +62,13 @@ const Feed = () => {
         </div>
       )}
 
-      {posts.map(post => <PostCard key={post.id} post={post} />)}
+      {posts.map(post => (
+        <PostCard
+          key={post.id}
+          post={post}
+          onDeleted={id => setPosts(prev => prev.filter(p => p.id !== id))}
+        />
+      ))}
 
       {!loading && posts.length === 0 && !error && (
         <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-sm border border-[#ced0d4] p-8 text-center">

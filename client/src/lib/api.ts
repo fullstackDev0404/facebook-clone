@@ -77,6 +77,15 @@ export const postsApi = {
   unlike: (postId: string) =>
     request(`/posts/${postId}/like`, { method: 'DELETE' }),
 
+  update: (postId: string, content: string) =>
+    request<{ post: import('@/types').PostRecord }>(`/posts/${postId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+
+  delete: (postId: string) =>
+    request<{ message: string }>(`/posts/${postId}`, { method: 'DELETE' }),
+
   getComments: (postId: string) =>
     request<{ comments: import('@/types').Comment[] }>(`/posts/${postId}/comments`),
 

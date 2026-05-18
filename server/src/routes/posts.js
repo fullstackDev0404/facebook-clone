@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const auth = require('../middleware/auth')
 const upload = require('../lib/upload')
-const { createPost, getFeed, likePost, unlikePost, getComments, createComment } = require('../controllers/posts')
+const { createPost, getFeed, likePost, unlikePost, getComments, createComment, updatePost, deletePost } = require('../controllers/posts')
 
 // Handle multer errors (file type / size) before they reach the global error handler
 const handleUpload = (req, res, next) => {
@@ -21,6 +21,12 @@ router.get('/feed', auth, getFeed)
 
 // POST /api/posts — create a post (text + optional image)
 router.post('/', auth, handleUpload, createPost)
+
+// PATCH /api/posts/:id — edit a post (author only)
+router.patch('/:id', auth, updatePost)
+
+// DELETE /api/posts/:id — delete a post (author only)
+router.delete('/:id', auth, deletePost)
 
 // POST /api/posts/:id/like — add or update reaction
 router.post('/:id/like', auth, likePost)

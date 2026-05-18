@@ -43,17 +43,21 @@ const RequestsTab = ({ onCountChange }: { onCountChange: (n: number) => void }) 
 
   useEffect(() => {
     friendsApi.getPendingRequests()
-      .then(d => { setRequests(d.requests); onCountChange(d.requests.length) })
+      .then(d => {
+        setRequests(d.requests)
+        onCountChange(d.requests.length)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sync count to parent after requests list changes (skip initial empty state)
+  useEffect(() => {
+    if (!loading) onCountChange(requests.length)
+  }, [requests]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleRespond = (id: string) => {
-    setRequests(prev => {
-      const next = prev.filter(r => r.id !== id)
-      onCountChange(next.length)
-      return next
-    })
+    setRequests(prev => prev.filter(r => r.id !== id))
   }
 
   if (loading) return (
@@ -79,7 +83,7 @@ const RequestsTab = ({ onCountChange }: { onCountChange: (n: number) => void }) 
             key={req.id}
             id={req.id}
             sender={req.sender}
-            onRespond={handleRespond}
+            onRespond={(id, _action) => handleRespond(id)}
           />
         ))}
       </div>

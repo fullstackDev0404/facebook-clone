@@ -14,16 +14,28 @@ const app  = express()
 const PORT = process.env.PORT || 5001
 
 // ── CORS — must be first, before helmet, so OPTIONS preflight is handled ──────
+const ALLOWED_ORIGINS = [
+    process.env.CLIENT_URL || 'http://localhost:3000',
+    'http://localhost:3000',
+    'http://192.168.2.52:3000',
+]
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman)
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true)
+        callback(new Error(`CORS: origin ${origin} not allowed`))
+    },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 204,
 }))
-// Handle preflight for all routes explicitly
 app.options('*', cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true)
+        callback(new Error(`CORS: origin ${origin} not allowed`))
+    },
     credentials: true,
     methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

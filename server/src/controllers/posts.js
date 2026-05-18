@@ -245,4 +245,52 @@ const createComment = async (req, res, next) => {
     }
 }
 
-module.exports = { createPost, getFeed, likePost, unlikePost, getComments, createComment }
+/**
+ * PATCH /api/posts/:id
+ * Body: { content: string }
+ * Edit a post's text content. Only the author can edit.
+ */
+const updatePost = async (req, res, next) => {
+    try {
+        const { id } = req.params
+        const userId  = req.user.id
+        const content = req.body.content?.trim() || null
+
+        const post = await prisma.post.findUnique({ where: { id } })
+        if (!post)                    return res.status(404).json({ error: 'Post not found' })
+        if (post.authorId !== userId) return res.status(403).json({ error: 'Not authorized' })
+        if (!content && !post.image)  return res.status(400).json({ error: 'Post must have text content or an image' })
+
+        const updated = await prisma.post.update({
+            where: { id },
+            data:  { content },
+            include: POST_INCLUDE,
+        })
+
+        res.json({ post: updated })
+    } catch (err) {
+        next(err)
+    }
+}
+
+/**
+ * DELETE /api/posts/:id
+ * Delete a post. Only the author can delete.
+ */
+const deletePost = async (req, res, next) => {
+    try {
+        const { id } = req.params
+        const userId  = req.user.id
+
+        const post = await prisma.post.findUnique({ where: { id } })
+        if (!post)                    return res.status(404).json({ error: 'Post not found' })
+        if (post.authorId !== userId) return res.status(403).json({ error: 'Not authorized' })
+
+        await prisma.post.delete({ where: { id } })
+        res.json({ message: 'Post deleted' })
+    } catch (err) {
+        next(err)
+    }
+}
+
+module.exports = { createPost, getFeed, likePost, unlikePost, getComments, createComment, updatePost, deletePost }

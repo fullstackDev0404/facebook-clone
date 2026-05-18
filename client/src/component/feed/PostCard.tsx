@@ -1,24 +1,52 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { MessageCircle, MoreHorizontal, Share2, ThumbsUp } from 'lucide-react'
+import { MessageCircle, MoreHorizontal, Pencil, Share2, ThumbsUp, Trash2, X, Loader2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from '@/components/ui/dialog'
 import { postsApi } from '@/lib/api'
+import { useAuth } from '@/context/AuthContext'
 import type { PostRecord } from '@/types'
 import { avatarSrc, initials, timeAgo } from './feedUtils'
 import CommentSection from './CommentSection'
 
-interface Props { post: PostRecord }
+interface Props {
+  post: PostRecord
+  onDeleted?: (id: string) => void
+}
 
-const PostCard = ({ post: initial }: Props) => {
-  const [post, setPost]               = useState(initial)
-  const [liked, setLiked]             = useState(false)
-  const [showComments, setShowComments] = useState(false)
+const PostCard = ({ post: initial, onDeleted }: Props) => {
+  const { user }                          = useAuth()
+  const [post, setPost]                   = useState(initial)
+  const [liked, setLiked]                 = useState(false)
+  const [showComments, setShowComments]   = useState(false)
+  const [menuOpen, setMenuOpen]           = useState(false)
+  const [editing, setEditing]             = useState(false)
+  const [editText, setEditText]           = useState(post.content ?? '')
+  const [saving, setSaving]               = useState(false)
+  const [deleteOpen, setDeleteOpen]       = useState(false)
+  const [deleting, setDeleting]           = useState(false)
+  const [editError, setEditError]         = useState('')
+  const menuRef                           = useRef<HTMLDivElement>(null)
 
-  const name = `${post.author.firstName} ${post.author.lastName}`
-  const fb   = initials(post.author.firstName, post.author.lastName)
+  const isOwner = user?.id === post.author.id
+  const name    = `${post.author.firstName} ${post.author.lastName}`
+  const fb      = initials(post.author.firstName, post.author.lastName)
   const likeCount    = post._count?.likes    ?? 0
   const commentCount = post._count?.comments ?? 0
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node))
+        setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   const handleLike = async () => {
     try {
@@ -34,81 +62,210 @@ const PostCard = ({ post: initial }: Props) => {
     } catch { /* silent */ }
   }
 
+  const handleSaveEdit = async () => {
+    const trimmed = editText.trim()
+    if (!trimmed && !post.image) { setEditError('Post must have text or an image.'); return }
+    setSaving(true)
+    setEditError('')
+    try {
+      const { post: updated } = await postsApi.update(post.id, trimmed)
+      setPost(updated)
+      setEditing(false)
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : 'Failed to save')
+    } finally { setSaving(false) }
+  }
+
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      await postsApi.delete(post.id)
+      setDeleteOpen(false)
+      onDeleted?.(post.id)
+    } catch { setDeleting(false) }
+  }
+
   const onCommentAdded = () =>
     setPost(p => ({ ...p, _count: { ...p._count, likes: p._count?.likes ?? 0, comments: (p._count?.comments ?? 0) + 1 } }))
 
   return (
-    <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-sm border border-[#ced0d4] dark:border-[#3e4042] overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <div className="flex items-center gap-3">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={avatarSrc(post.author.avatar)} className="" />
-            <AvatarFallback className="bg-[#1877f2] text-white font-semibold text-sm">{fb}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-semibold text-[14px] text-[#050505] dark:text-[#e4e6eb]">{name}</p>
-            <p className="text-[12px] text-[#65676b] flex items-center gap-1">
-              {timeAgo(post.createdAt)} · <span>Public</span>
-            </p>
+    <>
+      {/* ── Delete confirmation modal ── */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent showCloseButton={false} className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-1">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <DialogTitle className="text-center text-[17px]">Delete post?</DialogTitle>
+            <DialogDescription className="text-center text-[14px]">
+              This will permanently remove your post. You can&apos;t undo this.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2 sm:flex-row">
+            <button
+              onClick={() => setDeleteOpen(false)}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl bg-[#e4e6eb] hover:bg-[#d8dadf] disabled:opacity-50 text-[#050505] text-[14px] font-semibold transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white text-[14px] font-semibold transition-colors flex items-center justify-center gap-2"
+            >
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Post card ── */}
+      <div className="bg-white dark:bg-[#242526] rounded-2xl shadow-sm border border-[#ced0d4] dark:border-[#3e4042]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <div className="flex items-center gap-3">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={avatarSrc(post.author.avatar)} className="" />
+              <AvatarFallback className="bg-[#1877f2] text-white font-semibold text-sm">{fb}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-semibold text-[14px] text-[#050505] dark:text-[#e4e6eb]">{name}</p>
+              <p className="text-[12px] text-[#65676b] flex items-center gap-1">
+                {timeAgo(post.createdAt)} · <span>Public</span>
+              </p>
+            </div>
+          </div>
+
+          {/* 3-dot menu */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              className={`p-2 rounded-full transition-colors ${menuOpen ? 'bg-[#e7f3ff] text-[#1877f2]' : 'hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] text-[#65676b]'}`}
+            >
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+
+            {menuOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-[#242526] rounded-2xl py-1 z-50"
+                style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
+              >
+                {isOwner ? (
+                  <>
+                    <button
+                      onClick={() => { setEditing(true); setEditText(post.content ?? ''); setMenuOpen(false) }}
+                      className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]"
+                    >
+                      <Pencil className="w-4 h-4 text-[#65676b]" />
+                      Edit post
+                    </button>
+                    <button
+                      onClick={() => { setMenuOpen(false); setDeleteOpen(true) }}
+                      className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-[14px] font-medium text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete post
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]"
+                  >
+                    Hide post
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
-        <button className="p-2 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-full transition-colors">
-          <MoreHorizontal className="w-5 h-5 text-[#65676b]" />
-        </button>
-      </div>
 
-      {post.content && (
-        <p className="px-4 pb-3 text-[15px] text-[#050505] dark:text-[#e4e6eb] leading-relaxed">{post.content}</p>
-      )}
-
-      {post.image && (
-        <div className="w-full bg-[#f0f2f5]">
-          <Image src={avatarSrc(post.image) ?? ''} alt="Post" width={600} height={400} className="w-full object-cover max-h-[500px]" unoptimized />
-        </div>
-      )}
-
-      {(likeCount > 0 || commentCount > 0) && (
-        <div className="flex items-center justify-between px-4 py-2">
-          {likeCount > 0 && (
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-[#1877f2] flex items-center justify-center">
-                <ThumbsUp className="w-2.5 h-2.5 text-white fill-white" />
-              </div>
-              <span className="text-[13px] text-[#65676b]">{likeCount}</span>
+        {/* Edit mode */}
+        {editing ? (
+          <div className="px-4 pb-3">
+            <textarea
+              value={editText}
+              onChange={e => setEditText(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#f0f2f5] dark:bg-[#3a3b3c] outline-none text-[15px] text-[#050505] dark:text-[#e4e6eb] resize-none focus:ring-2 focus:ring-[#1877f2]/30 transition-all"
+              placeholder="What's on your mind?"
+              autoFocus
+            />
+            {editError && <p className="text-red-500 text-[12px] mt-1">{editError}</p>}
+            <div className="flex gap-2 mt-2 justify-end">
+              <button
+                onClick={() => { setEditing(false); setEditError('') }}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#e4e6eb] hover:bg-[#d8dadf] text-[#050505] text-[13px] font-semibold transition-colors"
+              >
+                <X className="w-3.5 h-3.5" /> Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={saving}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-[#1877f2] hover:bg-[#166fe5] disabled:opacity-60 text-white text-[13px] font-semibold transition-colors"
+              >
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                Save
+              </button>
             </div>
-          )}
-          {commentCount > 0 && (
-            <button onClick={() => setShowComments(p => !p)} className="ml-auto text-[13px] text-[#65676b] hover:underline">
-              {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+          </div>
+        ) : (
+          post.content && (
+            <p className="px-4 pb-3 text-[15px] text-[#050505] dark:text-[#e4e6eb] leading-relaxed">{post.content}</p>
+          )
+        )}
+
+        {post.image && (
+          <div className="w-full bg-[#f0f2f5] overflow-hidden">
+            <Image src={avatarSrc(post.image) ?? ''} alt="Post" width={600} height={400} className="w-full object-cover max-h-125" unoptimized />
+          </div>
+        )}
+
+        {(likeCount > 0 || commentCount > 0) && (
+          <div className="flex items-center justify-between px-4 py-2">
+            {likeCount > 0 && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-4 rounded-full bg-[#1877f2] flex items-center justify-center">
+                  <ThumbsUp className="w-2.5 h-2.5 text-white fill-white" />
+                </div>
+                <span className="text-[13px] text-[#65676b]">{likeCount}</span>
+              </div>
+            )}
+            {commentCount > 0 && (
+              <button onClick={() => setShowComments(p => !p)} className="ml-auto text-[13px] text-[#65676b] hover:underline">
+                {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className="mx-4 border-t border-[#ced0d4] dark:border-[#3e4042]" />
+
+        <div className="flex items-center px-2 py-1">
+          {[
+            { label: 'Like',    icon: ThumbsUp,      onClick: handleLike,                    active: liked },
+            { label: 'Comment', icon: MessageCircle,  onClick: () => setShowComments(p => !p), active: false },
+            { label: 'Share',   icon: Share2,         onClick: () => {},                       active: false },
+          ].map(({ label, icon: Icon, onClick, active }) => (
+            <button
+              key={label}
+              onClick={onClick}
+              className={`flex items-center gap-2 flex-1 justify-center py-2 rounded-xl transition-colors font-semibold text-[14px] ${
+                active ? 'text-[#1877f2]' : 'text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
+              }`}
+            >
+              <Icon className={`w-4 h-4 ${active ? 'fill-[#1877f2] text-[#1877f2]' : ''}`} strokeWidth={active ? 0 : 2} />
+              {label}
             </button>
-          )}
+          ))}
         </div>
-      )}
 
-      <div className="mx-4 border-t border-[#ced0d4] dark:border-[#3e4042]" />
-
-      <div className="flex items-center px-2 py-1">
-        {[
-          { label: 'Like',    icon: ThumbsUp,      onClick: handleLike,                    active: liked },
-          { label: 'Comment', icon: MessageCircle,  onClick: () => setShowComments(p => !p), active: false },
-          { label: 'Share',   icon: Share2,         onClick: () => {},                       active: false },
-        ].map(({ label, icon: Icon, onClick, active }) => (
-          <button
-            key={label}
-            onClick={onClick}
-            className={`flex items-center gap-2 flex-1 justify-center py-2 rounded-xl transition-colors font-semibold text-[14px] ${
-              active ? 'text-[#1877f2]' : 'text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
-            }`}
-          >
-            <Icon className={`w-4 h-4 ${active ? 'fill-[#1877f2] text-[#1877f2]' : ''}`} strokeWidth={active ? 0 : 2} />
-            {label}
-          </button>
-        ))}
+        {showComments && <CommentSection postId={post.id} onCommentAdded={onCommentAdded} />}
       </div>
-
-      {showComments && <CommentSection postId={post.id} onCommentAdded={onCommentAdded} />}
-    </div>
+    </>
   )
 }
 

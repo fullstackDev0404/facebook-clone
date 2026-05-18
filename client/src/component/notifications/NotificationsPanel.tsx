@@ -5,14 +5,16 @@ import { useRouter } from 'next/navigation'
 import { notificationsApi, type NotificationRecord } from '@/lib/api'
 import NotificationItem from './NotificationItem'
 
-interface Props { onClose: () => void }
+interface Props {
+  onClose: () => void
+  panelRef: React.RefObject<HTMLDivElement | null>
+}
 
-const NotificationsPanel = ({ onClose }: Props) => {
+const NotificationsPanel = ({ onClose, panelRef }: Props) => {
   const router = useRouter()
   const [items, setItems]     = useState<NotificationRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [marking, setMarking] = useState(false)
-  const panelRef              = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     notificationsApi.getAll({ limit: 20 })
@@ -20,14 +22,6 @@ const NotificationsPanel = ({ onClose }: Props) => {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) onClose()
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [onClose])
 
   const handleRead = async (id: string) => {
     try {
