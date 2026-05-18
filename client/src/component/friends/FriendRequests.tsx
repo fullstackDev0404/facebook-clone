@@ -11,26 +11,37 @@ interface PendingRequest {
   createdAt: string
 }
 
+interface Props {
+  onCountChange?: (count: number) => void
+}
+
 const initials = (a: Author) =>
   `${a.firstName[0] ?? ''}${a.lastName[0] ?? ''}`.toUpperCase()
 
-const FriendRequests = () => {
+const FriendRequests = ({ onCountChange }: Props) => {
   const [requests, setRequests] = useState<PendingRequest[]>([])
   const [loading, setLoading]   = useState(true)
   const [acting, setActing]     = useState<string | null>(null)
 
   useEffect(() => {
     friendsApi.getPendingRequests()
-      .then(d => setRequests(d.requests))
+      .then(d => {
+        setRequests(d.requests)
+        onCountChange?.(d.requests.length)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const respond = async (id: string, action: 'accept' | 'reject') => {
     setActing(id)
     try {
       await friendsApi.respond(id, action)
-      setRequests(prev => prev.filter(r => r.id !== id))
+      setRequests(prev => {
+        const next = prev.filter(r => r.id !== id)
+        onCountChange?.(next.length)
+        return next
+      })
     } catch { /* silent */ } finally { setActing(null) }
   }
 

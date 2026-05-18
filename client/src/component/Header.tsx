@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import {
     Search, Home, Users, Tv, Store, Bell, MessageCircle,
@@ -8,12 +8,14 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
+import { notificationsApi } from '@/lib/api'
+import NotificationsPanel from './notifications/NotificationsPanel'
 
-const navItems = [
-    { icon: Home,  label: 'Home' },
-    { icon: Users, label: 'Friends' },
-    { icon: Tv,    label: 'Watch' },
-    { icon: Store, label: 'Marketplace' },
+const NAV_ITEMS = [
+    { icon: Home,  label: 'Home',        href: '/'        },
+    { icon: Users, label: 'Friends',     href: '/friends' },
+    { icon: Tv,    label: 'Watch',       href: null       },
+    { icon: Store, label: 'Marketplace', href: null       },
 ]
 
 const getInitials = (name: string) =>
@@ -22,12 +24,18 @@ const getInitials = (name: string) =>
 const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const { user, logout } = useAuth()
     const router = useRouter()
+
     const [activeNav, setActiveNav]         = useState('Home')
     const [searchFocused, setSearchFocused] = useState(false)
     const [searchQuery, setSearchQuery]     = useState('')
     const [profileOpen, setProfileOpen]     = useState(false)
-    const profileRef = useRef<HTMLDivElement>(null)
+    const [notifOpen, setNotifOpen]         = useState(false)
+    const [unreadCount, setUnreadCount]     = useState(0)
 
+    const profileRef = useRef<HTMLDivElement>(null)
+    const notifRef   = useRef<HTMLDivElement>(null)
+
+    // Close profile dropdown on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (profileRef.current && !profileRef.current.contains(e.target as Node))
@@ -37,15 +45,27 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
+    // Fetch unread count on mount
+    useEffect(() => {
+        notificationsApi.getAll({ limit: 1 })
+            .then(d => setUnreadCount(d.unreadCount))
+            .catch(() => {})
+    }, [])
+
     const handleLogout = () => { logout(); router.push('/login') }
     const initials = getInitials(user?.name || '')
+
+    const handleNavClick = (label: string, href: string | null) => {
+        setActiveNav(label)
+        if (href) router.push(href)
+    }
 
     return (
         <header
             className="bg-white dark:bg-[#242526] w-full fixed top-0 left-0 z-50 border-b border-[#dddfe2] dark:border-[#3e4042]"
             style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}
         >
-            {/* ── DESKTOP ROW: Logo+Search | Nav icons (center) | Actions ── */}
+            {/* ── DESKTOP ROW ── */}
             <div className="flex items-stretch h-14 px-4 gap-2">
 
                 {/* Left: Logo + Search */}
@@ -72,32 +92,15 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                 </button>
                             )}
                         </div>
-
-                        {searchFocused && (
-                            <div
-                                className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#242526] rounded-2xl p-2 z-50"
-                                style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
-                            >
-                                <p className="text-[11px] text-[#65676b] px-3 py-1.5 font-semibold uppercase tracking-wider">Recent searches</p>
-                                {['Joana Kelly', 'Bob Smith'].map(name => (
-                                    <div key={name} className="flex items-center gap-3 px-3 py-2 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors">
-                                        <div className="w-8 h-8 rounded-full bg-[#e4e6eb] flex items-center justify-center shrink-0">
-                                            <Search className="w-3.5 h-3.5 text-[#65676b]" />
-                                        </div>
-                                        <span className="text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">{name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
                 </div>
 
-                {/* Center: Nav icons — desktop only, fills remaining space */}
+                {/* Center: Nav icons — desktop only */}
                 <nav className="hidden md:flex flex-1 items-stretch">
-                    {navItems.map(({ icon: Icon, label }) => (
+                    {NAV_ITEMS.map(({ icon: Icon, label, href }) => (
                         <button
                             key={label}
-                            onClick={() => setActiveNav(label)}
+                            onClick={() => handleNavClick(label, href)}
                             title={label}
                             className={`relative flex flex-1 items-center justify-center transition-colors group ${
                                 activeNav === label
@@ -117,13 +120,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                 </nav>
 
                 {/* Right: Actions */}
-                <div className="flex items-center gap-3 shrink-0 ml-auto">
+                <div className="flex items-center gap-1.5 shrink-0 ml-auto">
                     {/* Hamburger — mobile only */}
-                    <button
-                        onClick={onMenuClick}
+                    <button onClick={onMenuClick}
                         className="flex md:hidden items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full text-[#050505] dark:text-[#e4e6eb] transition-colors"
-                        title="Menu"
-                    >
+                        title="Menu">
                         <Menu className="w-5 h-5" />
                     </button>
 
@@ -135,14 +136,33 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                     {/* Messenger */}
                     <button className="relative flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full transition-colors">
                         <MessageCircle className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
-                        <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">3</span>
                     </button>
 
                     {/* Notifications */}
-                    <button className="relative flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full transition-colors">
-                        <Bell className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
-                        <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">5</span>
-                    </button>
+                    <div className="relative" ref={notifRef}>
+                        <button
+                            onClick={() => setNotifOpen(o => !o)}
+                            className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
+                                notifOpen ? 'bg-[#e7f3ff] dark:bg-[#263951]' : 'bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb]'
+                            }`}
+                        >
+                            <Bell className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">
+                                    {unreadCount > 99 ? '99+' : unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {notifOpen && (
+                            <NotificationsPanel
+                                onClose={() => {
+                                    setNotifOpen(false)
+                                    setUnreadCount(0)
+                                }}
+                            />
+                        )}
+                    </div>
 
                     {/* Profile */}
                     <div className="relative" ref={profileRef}>
@@ -159,10 +179,8 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                         </button>
 
                         {profileOpen && (
-                            <div
-                                className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#242526] rounded-2xl p-2 z-50"
-                                style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}
-                            >
+                            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#242526] rounded-2xl p-2 z-50"
+                                style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}>
                                 <div className="flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors">
                                     <Avatar className="w-14 h-14 shrink-0">
                                         <AvatarImage className="" />
@@ -178,7 +196,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
                                 {[
                                     { icon: Settings, label: 'Settings & privacy' },
-                                    { icon: User,     label: 'Help & support' },
+                                    { icon: User,     label: 'Help & support'     },
                                 ].map(({ icon: Icon, label }) => (
                                     <button key={label} className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
                                         <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
@@ -190,10 +208,8 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
                                 <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
 
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium"
-                                >
+                                <button onClick={handleLogout}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
                                     <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
                                         <LogOut className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
                                     </div>
@@ -209,14 +225,13 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                 </div>
             </div>
 
-            {/* ── MOBILE ROW 2: Nav icons — shown only below md ── */}
+            {/* ── MOBILE ROW 2: Nav icons ── */}
             <div className="flex md:hidden items-center border-t border-[#f0f2f5] dark:border-[#3e4042]" style={{ height: 48 }}>
-                {navItems.map(({ icon: Icon, label }) => (
+                {NAV_ITEMS.map(({ icon: Icon, label, href }) => (
                     <button
                         key={label}
-                        onClick={() => setActiveNav(label)}
-                        title={label}
-                        className={`relative flex flex-1 items-center justify-center h-full transition-colors group ${
+                        onClick={() => handleNavClick(label, href)}
+                        className={`relative flex flex-1 items-center justify-center h-full transition-colors ${
                             activeNav === label
                                 ? 'text-[#1877f2]'
                                 : 'text-[#65676b] dark:text-[#b0b3b8] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
@@ -234,4 +249,3 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 }
 
 export default Header
-

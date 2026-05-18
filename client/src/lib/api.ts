@@ -99,8 +99,8 @@ export const friendsApi = {
     }),
 
   respond: (id: string, action: 'accept' | 'reject') =>
-    request<{ friendship: FriendshipRecord }>(`/friends/${id}/respond`, {
-      method: 'PATCH',
+    request<{ friendship: FriendshipRecord }>(`/friends/request/${id}`, {
+      method: 'PUT',
       body: JSON.stringify({ action }),
     }),
 
@@ -143,4 +143,49 @@ interface FriendEntry {
   friendshipId: string
   friend: import('@/types').Author
   since: string
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export interface NotificationRecord {
+  id: string
+  type: string        // like | comment | friend_request | friend_accept | message
+  message: string
+  read: boolean
+  userId: string
+  actorId: string | null
+  entityId: string | null
+  createdAt: string
+}
+
+interface NotificationsResponse {
+  notifications: NotificationRecord[]
+  unreadCount: number
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+  }
+}
+
+export const notificationsApi = {
+  getAll: ({ page = 1, limit = 20, unreadOnly = false } = {}) =>
+    request<NotificationsResponse>(
+      `/notifications?page=${page}&limit=${limit}&unreadOnly=${unreadOnly}`
+    ),
+
+  markRead: (id: string) =>
+    request<{ notification: NotificationRecord }>(`/notifications/${id}/read`, {
+      method: 'PUT',
+    }),
+
+  markAllRead: () =>
+    request<{ message: string; count: number }>('/notifications/read-all', {
+      method: 'PUT',
+    }),
+
+  delete: (id: string) =>
+    request<{ message: string }>(`/notifications/${id}`, { method: 'DELETE' }),
 }

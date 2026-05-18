@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
     Home, Users, Clock, Bookmark, Flag, ChevronDown,
@@ -11,15 +12,15 @@ const getInitials = (name: string) =>
     name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
 const navItems = [
-    { icon: Home,         label: 'Home',        color: '#1877f2', bg: '#e7f3ff' },
-    { icon: Users,        label: 'Friends',     color: '#1877f2', bg: '#e7f3ff' },
-    { icon: Clock,        label: 'Memories',    color: '#e15241', bg: '#fce8e6' },
-    { icon: Bookmark,     label: 'Saved',       color: '#7c3aed', bg: '#ede9fe' },
-    { icon: Flag,         label: 'Pages',       color: '#f59e0b', bg: '#fef3c7' },
-    { icon: Store,        label: 'Marketplace', color: '#059669', bg: '#d1fae5' },
-    { icon: Tv,           label: 'Watch',       color: '#0ea5e9', bg: '#e0f2fe' },
-    { icon: Gamepad2,     label: 'Gaming',      color: '#6366f1', bg: '#e0e7ff' },
-    { icon: CalendarDays, label: 'Events',      color: '#e15241', bg: '#fce8e6' },
+    { icon: Home,         label: 'Home',        color: '#1877f2', bg: '#e7f3ff', href: '/'           },
+    { icon: Users,        label: 'Friends',     color: '#1877f2', bg: '#e7f3ff', href: '/friends'    },
+    { icon: Clock,        label: 'Memories',    color: '#e15241', bg: '#fce8e6', href: null          },
+    { icon: Bookmark,     label: 'Saved',       color: '#7c3aed', bg: '#ede9fe', href: null          },
+    { icon: Flag,         label: 'Pages',       color: '#f59e0b', bg: '#fef3c7', href: null          },
+    { icon: Store,        label: 'Marketplace', color: '#059669', bg: '#d1fae5', href: null          },
+    { icon: Tv,           label: 'Watch',       color: '#0ea5e9', bg: '#e0f2fe', href: null          },
+    { icon: Gamepad2,     label: 'Gaming',      color: '#6366f1', bg: '#e0e7ff', href: null          },
+    { icon: CalendarDays, label: 'Events',      color: '#e15241', bg: '#fce8e6', href: null          },
 ]
 
 interface Props {
@@ -29,6 +30,7 @@ interface Props {
 
 const LeftSidebar = ({ onClose, showCloseButton }: Props) => {
     const { user } = useAuth()
+    const router   = useRouter()
     const initials = getInitials(user?.name || '')
     const [activeItem, setActiveItem] = useState('Home')
 
@@ -80,12 +82,12 @@ const LeftSidebar = ({ onClose, showCloseButton }: Props) => {
 
                 {/* Nav items */}
                 <nav className="space-y-0.5">
-                    {navItems.map(({ icon: Icon, label, color, bg }) => {
+                    {navItems.map(({ icon: Icon, label, color, bg, href }) => {
                         const isActive = activeItem === label
                         return (
                             <button
                                 key={label}
-                                onClick={() => setActiveItem(label)}
+                                onClick={() => { setActiveItem(label); if (href) router.push(href) }}
                                 className="flex items-center gap-3 w-full px-2 py-2.5 rounded-xl text-left transition-colors"
                                 style={{ backgroundColor: isActive ? '#e7f3ff' : 'transparent' }}
                                 onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = '#f0f2f5' }}
