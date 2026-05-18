@@ -11,23 +11,36 @@ const errorHandler = require('./middleware/errorHandler')
 const prisma       = require('./lib/prisma')
 
 const app  = express()
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 5001
+
+// ── CORS — must be first, before helmet, so OPTIONS preflight is handled ──────
+app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
+}))
+// Handle preflight for all routes explicitly
+app.options('*', cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
+}))
 
 // ── Security & Logging ────────────────────────────────────────────────────────
-app.use(helmet())
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+}))
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
 app.use('/api/auth', rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    windowMs: 15 * 60 * 1000,
     max: 20,
     message: { error: 'Too many requests, please try again later.' }
-}))
-
-// ── CORS ──────────────────────────────────────────────────────────────────────
-app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    credentials: true,
 }))
 
 // ── Body parsing ──────────────────────────────────────────────────────────────

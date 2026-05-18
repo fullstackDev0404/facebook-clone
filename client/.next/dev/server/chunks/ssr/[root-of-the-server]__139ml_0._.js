@@ -17,7 +17,7 @@ __turbopack_context__.s([
     ()=>postsApi
 ]);
 // Centralized API client for all backend requests
-const BASE_URL = ("TURBOPACK compile-time value", "http://localhost:5000/api") || 'http://localhost:5000/api';
+const BASE_URL = ("TURBOPACK compile-time value", "http://localhost:5001/api") || 'http://localhost:5001/api';
 class ApiError extends Error {
     constructor(message, status){
         super(message);

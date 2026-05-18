@@ -1,159 +1,237 @@
 "use client"
 import React, { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import { Search, Home, Users, Tv, Store, Bell, MessageCircle, Menu, ChevronDown, LogOut, Settings, User } from 'lucide-react'
+import {
+    Search, Home, Users, Tv, Store, Bell, MessageCircle,
+    Menu, LogOut, Settings, User, X, LayoutGrid,
+} from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 
 const navItems = [
-    { icon: Home, label: 'Home' },
+    { icon: Home,  label: 'Home' },
     { icon: Users, label: 'Friends' },
-    { icon: Tv, label: 'Watch' },
+    { icon: Tv,    label: 'Watch' },
     { icon: Store, label: 'Marketplace' },
 ]
 
 const getInitials = (name: string) =>
     name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
-const Header = () => {
+const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const { user, logout } = useAuth()
     const router = useRouter()
-    const [activeNav, setActiveNav] = useState('Home')
+    const [activeNav, setActiveNav]         = useState('Home')
     const [searchFocused, setSearchFocused] = useState(false)
-    const [profileOpen, setProfileOpen] = useState(false)
+    const [searchQuery, setSearchQuery]     = useState('')
+    const [profileOpen, setProfileOpen]     = useState(false)
     const profileRef = useRef<HTMLDivElement>(null)
 
-    // Close profile dropdown on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
-            if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+            if (profileRef.current && !profileRef.current.contains(e.target as Node))
                 setProfileOpen(false)
-            }
         }
         document.addEventListener('mousedown', handler)
         return () => document.removeEventListener('mousedown', handler)
     }, [])
 
-    const handleLogout = () => {
-        logout()
-        router.push('/login')
-    }
-
+    const handleLogout = () => { logout(); router.push('/login') }
     const initials = getInitials(user?.name || '')
 
     return (
-        <header className="bg-white dark:bg-[rgb(36,37,38)] w-full shadow-md h-14 fixed top-0 left-0 z-50 px-4 flex items-center justify-between">
+        <header
+            className="bg-white dark:bg-[#242526] w-full fixed top-0 left-0 z-50 border-b border-[#dddfe2] dark:border-[#3e4042]"
+            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}
+        >
+            {/* ── DESKTOP ROW: Logo+Search | Nav icons (center) | Actions ── */}
+            <div className="flex items-stretch h-14 px-4 gap-2">
 
-            {/* Left — Logo + Search */}
-            <div className="flex items-center gap-2 min-w-50">
-                <Image src="/images/facebook-logo.jpg" alt="Facebook" width={40} height={40} className="rounded-full cursor-pointer" onClick={() => router.push('/')} />
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                        type="text"
-                        placeholder="Search Facebook"
-                        onFocus={() => setSearchFocused(true)}
-                        onBlur={() => setTimeout(() => setSearchFocused(false), 150)}
-                        className="pl-9 pr-3 py-2 w-44 bg-gray-100 dark:bg-[rgb(58,59,60)] rounded-full text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:placeholder-gray-400"
-                    />
-                    {searchFocused && (
-                        <div className="absolute top-full left-0 mt-1 w-72 bg-white dark:bg-[rgb(36,37,38)] border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-2 z-50">
-                            <p className="text-xs text-gray-500 px-2 py-1 font-semibold">Recent searches</p>
-                            <div className="flex items-center gap-3 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
-                                <Avatar className="w-8 h-8">
-                                    <AvatarImage className="" />
-                                    <AvatarFallback className="bg-blue-500 text-white text-xs">JK</AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm dark:text-white">Joana Kelly</span>
-                            </div>
+                {/* Left: Logo + Search */}
+                <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => router.push('/')} className="shrink-0">
+                        <Image src="/images/facebook-logo.jpg" alt="Facebook" width={40} height={40} className="rounded-full" />
+                    </button>
+
+                    <div className="relative">
+                        <div className={`flex items-center gap-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] rounded-full px-3 py-2 transition-all duration-200 ${searchFocused ? 'w-52' : 'w-44'}`}>
+                            <Search className="w-4 h-4 text-[#65676b] shrink-0" />
+                            <input
+                                type="text"
+                                placeholder="Search Facebook"
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                onFocus={() => setSearchFocused(true)}
+                                onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                                className="bg-transparent outline-none text-[14px] text-[#050505] dark:text-[#e4e6eb] placeholder-[#65676b] w-full min-w-0"
+                            />
+                            {searchFocused && searchQuery && (
+                                <button onClick={() => setSearchQuery('')} className="shrink-0">
+                                    <X className="w-3.5 h-3.5 text-[#65676b]" />
+                                </button>
+                            )}
                         </div>
-                    )}
+
+                        {searchFocused && (
+                            <div
+                                className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-[#242526] rounded-2xl p-2 z-50"
+                                style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.12)' }}
+                            >
+                                <p className="text-[11px] text-[#65676b] px-3 py-1.5 font-semibold uppercase tracking-wider">Recent searches</p>
+                                {['Joana Kelly', 'Bob Smith'].map(name => (
+                                    <div key={name} className="flex items-center gap-3 px-3 py-2 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-[#e4e6eb] flex items-center justify-center shrink-0">
+                                            <Search className="w-3.5 h-3.5 text-[#65676b]" />
+                                        </div>
+                                        <span className="text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">{name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Center: Nav icons — desktop only, fills remaining space */}
+                <nav className="hidden md:flex flex-1 items-stretch">
+                    {navItems.map(({ icon: Icon, label }) => (
+                        <button
+                            key={label}
+                            onClick={() => setActiveNav(label)}
+                            title={label}
+                            className={`relative flex flex-1 items-center justify-center transition-colors group ${
+                                activeNav === label
+                                    ? 'text-[#1877f2]'
+                                    : 'text-[#65676b] dark:text-[#b0b3b8] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
+                            }`}
+                        >
+                            <Icon className="w-6 h-6" strokeWidth={activeNav === label ? 2.5 : 2} />
+                            {activeNav === label && (
+                                <span className="absolute bottom-0 left-0 right-0 h-0.75 bg-[#1877f2] rounded-t-sm" />
+                            )}
+                            <span className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-[#1c1e21] text-white text-[11px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg z-50">
+                                {label}
+                            </span>
+                        </button>
+                    ))}
+                </nav>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-3 shrink-0 ml-auto">
+                    {/* Hamburger — mobile only */}
+                    <button
+                        onClick={onMenuClick}
+                        className="flex md:hidden items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full text-[#050505] dark:text-[#e4e6eb] transition-colors"
+                        title="Menu"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+
+                    {/* Grid menu */}
+                    <button className="flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full text-[#050505] dark:text-[#e4e6eb] transition-colors" title="Menu">
+                        <LayoutGrid className="w-5 h-5" />
+                    </button>
+
+                    {/* Messenger */}
+                    <button className="relative flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full transition-colors">
+                        <MessageCircle className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                        <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">3</span>
+                    </button>
+
+                    {/* Notifications */}
+                    <button className="relative flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full transition-colors">
+                        <Bell className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                        <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">5</span>
+                    </button>
+
+                    {/* Profile */}
+                    <div className="relative" ref={profileRef}>
+                        <button
+                            onClick={() => setProfileOpen(o => !o)}
+                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
+                                profileOpen ? 'bg-[#e7f3ff] dark:bg-[#263951]' : 'hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
+                            }`}
+                        >
+                            <Avatar className="w-9 h-9">
+                                <AvatarImage className="" />
+                                <AvatarFallback className="bg-[#1877f2] text-white text-sm font-bold">{initials}</AvatarFallback>
+                            </Avatar>
+                        </button>
+
+                        {profileOpen && (
+                            <div
+                                className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#242526] rounded-2xl p-2 z-50"
+                                style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}
+                            >
+                                <div className="flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors">
+                                    <Avatar className="w-14 h-14 shrink-0">
+                                        <AvatarImage className="" />
+                                        <AvatarFallback className="bg-[#1877f2] text-white text-xl font-bold">{initials}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="font-semibold text-[15px] text-[#050505] dark:text-[#e4e6eb]">{user?.name}</p>
+                                        <p className="text-[13px] text-[#1877f2] font-medium mt-0.5">See your profile</p>
+                                    </div>
+                                </div>
+
+                                <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
+
+                                {[
+                                    { icon: Settings, label: 'Settings & privacy' },
+                                    { icon: User,     label: 'Help & support' },
+                                ].map(({ icon: Icon, label }) => (
+                                    <button key={label} className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
+                                        <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
+                                            <Icon className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                                        </div>
+                                        {label}
+                                    </button>
+                                ))}
+
+                                <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
+
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium"
+                                >
+                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
+                                        <LogOut className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                                    </div>
+                                    Log out
+                                </button>
+
+                                <p className="text-[11px] text-[#8a8d91] px-3 pt-3 pb-1 leading-relaxed">
+                                    Privacy · Terms · Advertising · Cookies · More · Meta © {new Date().getFullYear()}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            {/* Center — Nav Icons */}
-            <nav className="hidden md:flex items-center gap-1">
+            {/* ── MOBILE ROW 2: Nav icons — shown only below md ── */}
+            <div className="flex md:hidden items-center border-t border-[#f0f2f5] dark:border-[#3e4042]" style={{ height: 48 }}>
                 {navItems.map(({ icon: Icon, label }) => (
                     <button
                         key={label}
                         onClick={() => setActiveNav(label)}
                         title={label}
-                        className={`relative flex items-center justify-center w-24 h-12 rounded-lg transition-colors group
-                            ${activeNav === label
-                                ? 'text-blue-500 border-b-2 border-blue-500'
-                                : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
+                        className={`relative flex flex-1 items-center justify-center h-full transition-colors group ${
+                            activeNav === label
+                                ? 'text-[#1877f2]'
+                                : 'text-[#65676b] dark:text-[#b0b3b8] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
+                        }`}
                     >
-                        <Icon className="w-6 h-6" />
-                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
-                            {label}
-                        </span>
+                        <Icon className="w-6 h-6" strokeWidth={activeNav === label ? 2.5 : 2} />
+                        {activeNav === label && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.75 bg-[#1877f2] rounded-t-sm" />
+                        )}
                     </button>
                 ))}
-            </nav>
-
-            {/* Right — Actions + Profile */}
-            <div className="flex items-center gap-2 min-w-50 justify-end">
-                <button className="flex items-center gap-1 bg-gray-100 dark:bg-[rgb(58,59,60)] hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded-full text-sm font-medium dark:text-white transition-colors">
-                    <Menu className="w-4 h-4" />
-                    <span className="hidden lg:inline">Menu</span>
-                </button>
-                <button className="relative p-2 bg-gray-100 dark:bg-[rgb(58,59,60)] hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors">
-                    <MessageCircle className="w-5 h-5 dark:text-white" />
-                    <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-                </button>
-                <button className="relative p-2 bg-gray-100 dark:bg-[rgb(58,59,60)] hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full transition-colors">
-                    <Bell className="w-5 h-5 dark:text-white" />
-                    <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
-                </button>
-
-                {/* Profile dropdown */}
-                <div className="relative" ref={profileRef}>
-                    <button
-                        onClick={() => setProfileOpen(o => !o)}
-                        className="flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-gray-700 p-1 rounded-full transition-colors"
-                    >
-                        <Avatar className="w-9 h-9">
-                            <AvatarImage className="" />
-                            <AvatarFallback className="bg-blue-500 text-white text-sm font-bold">{initials}</AvatarFallback>
-                        </Avatar>
-                        <ChevronDown className="w-4 h-4 text-gray-500 hidden lg:block" />
-                    </button>
-
-                    {profileOpen && (
-                        <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[rgb(36,37,38)] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl p-2 z-50">
-                            {/* User info */}
-                            <div className="flex items-center gap-3 p-2 mb-1">
-                                <Avatar className="w-10 h-10">
-                                    <AvatarImage className="" />
-                                    <AvatarFallback className="bg-blue-500 text-white font-bold">{initials}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold text-sm dark:text-white">{user?.name}</p>
-                                    <p className="text-xs text-gray-500 truncate max-w-[130px]">{user?.email}</p>
-                                </div>
-                            </div>
-                            <hr className="border-gray-200 dark:border-gray-700 my-1" />
-                            <button className="flex items-center gap-3 w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm dark:text-white">
-                                <User className="w-4 h-4" /> View Profile
-                            </button>
-                            <button className="flex items-center gap-3 w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm dark:text-white">
-                                <Settings className="w-4 h-4" /> Settings
-                            </button>
-                            <hr className="border-gray-200 dark:border-gray-700 my-1" />
-                            <button
-                                onClick={handleLogout}
-                                className="flex items-center gap-3 w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-sm text-red-500"
-                            >
-                                <LogOut className="w-4 h-4" /> Log out
-                            </button>
-                        </div>
-                    )}
-                </div>
             </div>
         </header>
     )
 }
 
 export default Header
+
