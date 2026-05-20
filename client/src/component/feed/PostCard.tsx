@@ -164,7 +164,7 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
                     </button>
                     <button
                       onClick={() => { setMenuOpen(false); setDeleteOpen(true) }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-[14px] font-medium text-red-500"
+                      className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl bg-transparent hover:bg-red-50 dark:bg-transparent dark:hover:bg-red-900/20 transition-colors text-[14px] font-medium text-red-500"
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete post
