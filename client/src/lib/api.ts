@@ -125,7 +125,21 @@ export const friendsApi = {
   getSuggestions: () =>
     request<{ suggestions: import('@/types').Author[] }>('/friends/suggestions'),
 }
+export const usersApi = {
+  getProfile: (id: string) =>
+    request<{ user: UserProfile; recentPosts: import('@/types').PostRecord[] }>(`/users/${id}`),
+}
 
+export const messagesApi = {
+  getChatHistory: (userId: string) =>
+    request<ConversationResponse>(`/messages/${userId}`),
+
+  send: (receiverId: string, content: string) =>
+    request<{ message: MessageRecord }>('/messages', {
+      method: 'POST',
+      body: JSON.stringify({ receiverId, content }),
+    }),
+}
 // ─── Friend types (local to api.ts) ──────────────────────────────────────────
 
 interface FriendshipRecord {
@@ -148,10 +162,41 @@ interface PendingRequest {
   sender: import('@/types').Author
 }
 
-interface FriendEntry {
+export interface FriendEntry {
   friendshipId: string
   friend: import('@/types').Author
   since: string
+}
+
+export interface MessageRecord {
+  id: string
+  content: string
+  createdAt: string
+  senderId: string
+  receiverId: string
+  sender: import('@/types').Author
+  receiver: import('@/types').Author
+}
+
+export interface ConversationResponse {
+  conversation: {
+    participant: import('@/types').Author
+    messages: MessageRecord[]
+  }
+}
+
+export interface UserProfile {
+  id: string
+  firstName: string
+  lastName: string
+  avatar: string | null
+  coverPhoto: string | null
+  bio: string | null
+  dob: string | null
+  gender: string | null
+  createdAt: string
+  postsCount: number
+  friendsCount: number
 }
 
 // ─── Notifications ────────────────────────────────────────────────────────────

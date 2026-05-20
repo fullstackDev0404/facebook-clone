@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
     Home, Users, Clock, Bookmark, Flag, ChevronDown,
-    Store, Tv, Gamepad2, CalendarDays, X,
+    Store, Tv, MessageCircle, Gamepad2, CalendarDays, X,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
@@ -14,6 +14,7 @@ const getInitials = (name: string) =>
 const navItems = [
     { icon: Home,         label: 'Home',        color: '#1877f2', bg: '#e7f3ff', href: '/'           },
     { icon: Users,        label: 'Friends',     color: '#1877f2', bg: '#e7f3ff', href: '/friends'    },
+    { icon: MessageCircle,label: 'Messenger',   color: '#1877f2', bg: '#e7f3ff', href: '/messages'   },
     { icon: Clock,        label: 'Memories',    color: '#e15241', bg: '#fce8e6', href: null          },
     { icon: Bookmark,     label: 'Saved',       color: '#7c3aed', bg: '#ede9fe', href: null          },
     { icon: Flag,         label: 'Pages',       color: '#f59e0b', bg: '#fef3c7', href: null          },
@@ -62,6 +63,7 @@ const LeftSidebar = ({ onClose, showCloseButton }: Props) => {
 
                 {/* Profile row */}
                 <button
+                    onClick={() => user && router.push(`/profile/${user.id}`)}
                     className="flex items-center gap-3 w-full px-2 py-2.5 rounded-xl text-left transition-colors"
                     style={{ backgroundColor: 'transparent' }}
                     onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f0f2f5')}

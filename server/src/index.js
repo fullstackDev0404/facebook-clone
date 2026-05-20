@@ -1,5 +1,6 @@
 require('dotenv').config()
 
+const http = require('http')
 const express = require('express')
 const cors    = require('cors')
 const helmet  = require('helmet')
@@ -9,6 +10,7 @@ const rateLimit = require('express-rate-limit')
 const routes       = require('./routes')
 const errorHandler = require('./middleware/errorHandler')
 const prisma       = require('./lib/prisma')
+const { initSocket } = require('./lib/socket')
 
 const app  = express()
 const PORT = process.env.PORT || 5001
@@ -84,9 +86,13 @@ async function start() {
         await prisma.$connect()
         console.log('✅ Database connected')
 
-        app.listen(PORT, () => {
+        const server = http.createServer(app)
+        const io = initSocket(server)
+
+        server.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`)
             console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`)
+            console.log(`   Socket.io ready with ${io.engine.clientsCount} connected clients`)
         })
     } catch (err) {
         console.error('❌ Failed to connect to database:', err.message)

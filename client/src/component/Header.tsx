@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { notificationsApi } from '@/lib/api'
 import NotificationsPanel from './notifications/NotificationsPanel'
 
@@ -24,8 +24,8 @@ const getInitials = (name: string) =>
 const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const { user, logout } = useAuth()
     const router = useRouter()
+    const pathname = usePathname()
 
-    const [activeNav, setActiveNav]         = useState('Home')
     const [searchFocused, setSearchFocused] = useState(false)
     const [searchQuery, setSearchQuery]     = useState('')
     const [profileOpen, setProfileOpen]     = useState(false)
@@ -34,6 +34,17 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
     const profileRef = useRef<HTMLDivElement>(null)
     const notifRef   = useRef<HTMLDivElement>(null)
+
+    // Determine active nav based on current pathname
+    const getActiveNav = (): string => {
+        if (pathname === '/') return 'Home'
+        if (pathname === '/friends') return 'Friends'
+        if (pathname === '/watch') return 'Watch'
+        if (pathname === '/marketplace') return 'Marketplace'
+        return 'Home'
+    }
+
+    const activeNav = getActiveNav()
 
     // Close profile dropdown on outside click
     useEffect(() => {
@@ -65,8 +76,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const handleLogout = () => { logout(); router.push('/login') }
     const initials = getInitials(user?.name || '')
 
-    const handleNavClick = (label: string, href: string | null) => {
-        setActiveNav(label)
+    const handleNavClick = (_label: string, href: string | null) => {
         if (href) router.push(href)
     }
 
@@ -139,7 +149,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                     </button>
 
                     {/* Messenger */}
-                    <button className="relative flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full transition-colors">
+                    <button
+                        onClick={() => router.push('/messages')}
+                        className="relative flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full transition-colors"
+                        title="Messenger"
+                    >
                         <MessageCircle className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
                     </button>
 
@@ -187,7 +201,12 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                         {profileOpen && (
                             <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#242526] rounded-2xl p-2 z-50"
                                 style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}>
-                                <div className="flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors">
+                                <button 
+                                    onClick={() => {
+                                        router.push(`/profile/${user?.id}`)
+                                        setProfileOpen(false)
+                                    }}
+                                    className="flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors w-full text-left">
                                     <Avatar className="w-14 h-14 shrink-0">
                                         <AvatarImage className="" />
                                         <AvatarFallback className="bg-[#1877f2] text-white text-xl font-bold">{initials}</AvatarFallback>
@@ -196,21 +215,29 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                         <p className="font-semibold text-[15px] text-[#050505] dark:text-[#e4e6eb]">{user?.name}</p>
                                         <p className="text-[13px] text-[#1877f2] font-medium mt-0.5">See your profile</p>
                                     </div>
-                                </div>
+                                </button>
 
                                 <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
 
-                                {[
-                                    { icon: Settings, label: 'Settings & privacy' },
-                                    { icon: User,     label: 'Help & support'     },
-                                ].map(({ icon: Icon, label }) => (
-                                    <button key={label} className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
-                                        <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
-                                            <Icon className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
-                                        </div>
-                                        {label}
-                                    </button>
-                                ))}
+                                <button 
+                                    onClick={() => {
+                                        router.push('/profile/edit')
+                                        setProfileOpen(false)
+                                    }}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
+                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
+                                        <Settings className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                                    </div>
+                                    Settings & privacy
+                                </button>
+
+                                <button 
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
+                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
+                                        <User className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                                    </div>
+                                    Help & support
+                                </button>
 
                                 <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
 

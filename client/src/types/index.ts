@@ -10,6 +10,7 @@ export interface Author {
 export interface User extends Author {
   email: string
   name?: string
+  bio?: string
 }
 
 export interface PostRecord {

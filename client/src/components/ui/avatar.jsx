@@ -5,6 +5,34 @@ import { Avatar as AvatarPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * @typedef {React.PropsWithChildren<React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> & {
+ *   className?: string;
+ *   size?: string;
+ * }>} AvatarProps
+ */
+
+/**
+ * @typedef {React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image>} AvatarImageProps
+ */
+
+/**
+ * @typedef {React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback>} AvatarFallbackProps
+ */
+
+/**
+ * @typedef {React.HTMLAttributes<HTMLSpanElement>} AvatarBadgeProps
+ */
+
+/**
+ * @typedef {React.HTMLAttributes<HTMLDivElement>} AvatarGroupProps
+ */
+
+/**
+ * @typedef {React.HTMLAttributes<HTMLDivElement>} AvatarGroupCountProps
+ */
+
+/** @param {AvatarProps} props */
 function Avatar({
   className,
   size = "default",
@@ -22,6 +50,7 @@ function Avatar({
   );
 }
 
+/** @param {AvatarImageProps} props */
 function AvatarImage({
   className,
   ...props
@@ -34,6 +63,7 @@ function AvatarImage({
   );
 }
 
+/** @param {AvatarFallbackProps} props */
 function AvatarFallback({
   className,
   ...props
@@ -49,6 +79,7 @@ function AvatarFallback({
   );
 }
 
+/** @param {AvatarBadgeProps} props */
 function AvatarBadge({
   className,
   ...props
@@ -67,6 +98,7 @@ function AvatarBadge({
   );
 }
 
+/** @param {AvatarGroupProps} props */
 function AvatarGroup({
   className,
   ...props
@@ -82,6 +114,7 @@ function AvatarGroup({
   );
 }
 
+/** @param {AvatarGroupCountProps} props */
 function AvatarGroupCount({
   className,
   ...props

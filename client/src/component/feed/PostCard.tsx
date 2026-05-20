@@ -20,6 +20,12 @@ interface Props {
 
 const PostCard = ({ post: initial, onDeleted }: Props) => {
   const { user }                          = useAuth()
+  
+  // Guard against undefined post
+  if (!initial || !initial.id || !initial.author) {
+    return null
+  }
+  
   const [post, setPost]                   = useState(initial)
   const [liked, setLiked]                 = useState(false)
   const [showComments, setShowComments]   = useState(false)

@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma')
+const { getIo } = require('../lib/socket')
 
 /**
  * GET /api/messages/:userId
@@ -84,6 +85,14 @@ const sendMessage = async (req, res, next) => {
         receiver: { select: { id: true, firstName: true, lastName: true, avatar: true } },
       },
     })
+
+    try {
+      const io = getIo()
+      io.to(receiverId).emit('message:new', { message })
+      io.to(senderId).emit('message:new', { message })
+    } catch (err) {
+      // Socket.io may not be initialized in some test or startup contexts.
+    }
 
     res.status(201).json({ message })
   } catch (err) {
