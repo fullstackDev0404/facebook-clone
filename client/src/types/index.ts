@@ -32,6 +32,17 @@ export interface Comment {
   replies?: Comment[]
 }
 
+export interface StoryRecord {
+  id: string
+  image: string | null
+  text: string | null
+  backgroundColor: string
+  authorId: string
+  createdAt: string
+  expiresAt: string
+  author: Author
+}
+
 export interface AuthContextValue {
   user: User | null
   loading: boolean

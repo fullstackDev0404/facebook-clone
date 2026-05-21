@@ -96,6 +96,33 @@ export const postsApi = {
     }),
 }
 
+// ─── Stories ────────────────────────────────────────────────────────────────────
+
+export const storiesApi = {
+  getFeed: () =>
+    request<{ stories: import('@/types').StoryRecord[] }>(`/stories/feed`),
+
+  create: (image: File | undefined, text?: string, backgroundColor?: string) => {
+    const token = getToken()
+    const form = new FormData()
+    if (image)   form.append('image', image)
+    if (text)    form.append('text', text)
+    if (backgroundColor) form.append('backgroundColor', backgroundColor)
+    return fetch(`${API_BASE_URL}/stories`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    }).then(async (res) => {
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new ApiError(data.error || 'Something went wrong', res.status)
+      return data as { story: import('@/types').StoryRecord }
+    })
+  },
+
+  delete: (id: string) =>
+    request<{ message: string }>(`/stories/${id}`, { method: 'DELETE' }),
+}
+
 export { MEDIA_BASE_URL }
 
 // ─── Friends ──────────────────────────────────────────────────────────────────

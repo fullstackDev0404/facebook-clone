@@ -31,6 +31,7 @@ model User {
   sentMessages     Message[]     @relation("SentMessages")
   receivedMessages Message[]     @relation("ReceivedMessages")
   notifications    Notification[]
+  stories          Story[]
 
   @@map("users")
 }
@@ -122,4 +123,19 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
+}
+
+model Story {
+  id              String   @id @default(cuid())
+  image           String?
+  text            String?
+  backgroundColor String   @default("#ff0000")
+  authorId        String
+  createdAt       DateTime @default(now())
+  expiresAt       DateTime
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, createdAt])
+  @@map("stories")
 }

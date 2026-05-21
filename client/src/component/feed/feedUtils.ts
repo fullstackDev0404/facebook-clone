@@ -14,11 +14,3 @@ export const initials = (first: string, last: string): string =>
 
 export const avatarSrc = (path: string | null): string | undefined =>
   path ? `${MEDIA_BASE_URL}/${path}` : undefined
-
-export const STORIES = [
-  { name: 'Your Story', fallback: 'Y',  color: 'from-blue-500 to-blue-600',    isCreate: true  },
-  { name: 'Alice J.',   fallback: 'AJ', color: 'from-pink-500 to-rose-500',    isCreate: false },
-  { name: 'Bob S.',     fallback: 'BS', color: 'from-emerald-500 to-green-600', isCreate: false },
-  { name: 'Carol W.',   fallback: 'CW', color: 'from-violet-500 to-purple-600', isCreate: false },
-  { name: 'David L.',   fallback: 'DL', color: 'from-orange-400 to-amber-500',  isCreate: false },
-] as const
