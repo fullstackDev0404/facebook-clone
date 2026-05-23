@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma')
+const { VALID_REACTIONS } = require('../lib/constants')
 
 // Shared Prisma include shape for post queries
 const POST_INCLUDE = {
@@ -94,9 +95,17 @@ const createPost = async (req, res, next) => {
     try {
         const content = req.body.content?.trim() || null
         const feeling = req.body.feeling?.trim() || null
-        const taggedIds = req.body.taggedIds
-            ? JSON.parse(req.body.taggedIds).filter(Boolean)
-            : []
+        // Safely parse tagged IDs (may be JSON string from multipart form)
+        let taggedIds = []
+        if (req.body.taggedIds) {
+            try {
+                const parsed = JSON.parse(req.body.taggedIds)
+                if (Array.isArray(parsed)) taggedIds = parsed.filter(Boolean)
+            } catch (e) {
+                // malformed input — treat as no tags
+                taggedIds = []
+            }
+        }
         const imagePath = req.file ? `uploads/posts/${req.file.filename}` : null
 
         const isVideo = req.file && req.file.mimetype.startsWith('video/')
@@ -111,32 +120,37 @@ const createPost = async (req, res, next) => {
             ? `${content ?? ''}${content ? ' — ' : ''}feeling ${feeling}`
             : content
 
-        const post = await prisma.post.create({
-            data: {
-                content: finalContent,
-                image: photoPath,
-                video: videoPath,
-                authorId: req.user.id,
-                tags: taggedIds.length
-                    ? { create: taggedIds.map(uid => ({ userId: uid })) }
-                    : undefined,
-            },
-            include: POST_INCLUDE,
-        })
-
-        // Notify each tagged user
-        if (taggedIds.length) {
-            await prisma.notification.createMany({
-                data: taggedIds.map(uid => ({
-                    type: 'tag',
-                    message: `${req.user.firstName} ${req.user.lastName} tagged you in a post`,
-                    userId: uid,
-                    actorId: req.user.id,
-                    entityId: post.id,
-                })),
-                skipDuplicates: true,
+        // Create post and notifications in a transaction so we don't end up
+        // with orphaned notifications or partial state on errors.
+        const post = await prisma.$transaction(async (tx) => {
+            const p = await tx.post.create({
+                data: {
+                    content: finalContent,
+                    image: photoPath,
+                    video: videoPath,
+                    authorId: req.user.id,
+                    tags: taggedIds.length
+                        ? { create: taggedIds.map(uid => ({ userId: uid })) }
+                        : undefined,
+                },
+                include: POST_INCLUDE,
             })
-        }
+
+            if (taggedIds.length) {
+                await tx.notification.createMany({
+                    data: taggedIds.map(uid => ({
+                        type: 'tag',
+                        message: `${req.user.firstName} ${req.user.lastName} tagged you in a post`,
+                        userId: uid,
+                        actorId: req.user.id,
+                        entityId: p.id,
+                    })),
+                    skipDuplicates: true,
+                })
+            }
+
+            return p
+        })
 
         res.status(201).json({ post })
     } catch (err) {
@@ -156,8 +170,7 @@ const likePost = async (req, res, next) => {
         const type   = req.body.type || 'like'
 
         // Validate reaction type
-        const validTypes = ['like', 'love', 'haha', 'wow', 'sad', 'angry']
-        if (!validTypes.includes(type)) {
+        if (!VALID_REACTIONS.includes(type)) {
             return res.status(400).json({ error: 'Invalid reaction type' })
         }
 
@@ -352,18 +365,19 @@ const getPostLikes = async (req, res, next) => {
     const post = await prisma.post.findUnique({ where: { id: postId } })
     if (!post) return res.status(404).json({ error: 'Post not found' })
 
-    // Group likes by type and count
-    const likes = await prisma.like.groupBy({
-      by: ['type'],
-      where: { postId },
-      _count: { type: true },
-    })
+        // Group likes by type and count
+        const likes = await prisma.like.groupBy({
+            by: ['type'],
+            where: { postId },
+            _count: { type: true },
+        })
 
-    // Build breakdown object
-    const breakdown = {}
-    for (const { type, _count } of likes) {
-      breakdown[type] = _count
-    }
+        // Build breakdown object
+        const breakdown = {}
+        for (const { type, _count } of likes) {
+            // _count is an object like { type: number }
+            breakdown[type] = (_count && typeof _count.type === 'number') ? _count.type : 0
+        }
 
     // Ensure all reaction types are present (with zero count)
     const validTypes = ['like', 'love', 'haha', 'wow', 'sad', 'angry']

@@ -72,9 +72,9 @@ const getFeed = async (req, res, next) => {
 
         const stories = await prisma.story.findMany({
             where: {
-                authorId: { in: authorIds },
-                expiresAt: { gt: now },
-            },
+                    authorId: { in: authorIds },
+                    expiresAt: { gt: now },
+                },
             include: {
                 author: {
                     select: { id: true, firstName: true, lastName: true, avatar: true },

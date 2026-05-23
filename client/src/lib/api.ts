@@ -89,6 +89,9 @@ export const postsApi = {
   getComments: (postId: string) =>
     request<{ comments: import('@/types').Comment[] }>(`/posts/${postId}/comments`),
 
+  getReactions: (postId: string) =>
+    request<{ breakdown: Record<string, number> }>(`/posts/${postId}/likes`),
+
   createComment: (postId: string, { content, parentId }: { content: string; parentId?: string }) =>
     request<{ comment: import('@/types').Comment }>(`/posts/${postId}/comments`, {
       method: 'POST',

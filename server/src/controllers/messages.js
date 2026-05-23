@@ -25,6 +25,10 @@ const getChatHistory = async (req, res, next) => {
     const userId       = req.user.id
     const otherUserId  = req.params.userId
 
+    if (!otherUserId || typeof otherUserId !== 'string') {
+      return res.status(400).json({ error: 'Invalid user id' })
+    }
+
     if (userId === otherUserId) {
       return res.status(400).json({ error: 'Cannot fetch a conversation with yourself' })
     }

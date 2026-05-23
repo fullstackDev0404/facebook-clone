@@ -27,6 +27,7 @@ export interface PostRecord {
   author: Author
   tags?: { user: Author }[]
   _count?: { likes: number; comments: number }
+  userReactionType?: string | null
 }
 
 export interface Comment {

@@ -10,19 +10,29 @@ import { avatarSrc } from '@/component/feed/feedUtils'
 const getInitials = (name: string) =>
   name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
+const formatDateForInput = (dateString?: string) => {
+  if (!dateString) return ''
+  try {
+    const date = new Date(dateString)
+    return date.toISOString().split('T')[0]
+  } catch {
+    return ''
+  }
+}
+
 export default function EditProfilePage() {
   const router = useRouter()
   const { user, login } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
-    bio: '',
-    email: '',
-    dob: '',
-    gender: '',
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    username: user?.username || '',
+    bio: user?.bio || '',
+    email: user?.email || '',
+    dob: formatDateForInput(user?.dob),
+    gender: user?.gender || '',
   })
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
@@ -33,17 +43,6 @@ export default function EditProfilePage() {
   // Update form data when user data becomes available
   useEffect(() => {
     if (user) {
-      // Format date for HTML date input (YYYY-MM-DD)
-      const formatDateForInput = (dateString: string | undefined) => {
-        if (!dateString) return ''
-        try {
-          const date = new Date(dateString)
-          return date.toISOString().split('T')[0]
-        } catch {
-          return ''
-        }
-      }
-
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',

@@ -45,7 +45,26 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const isOwner = user?.id === post.author.id
   const name    = `${post.author.firstName} ${post.author.lastName}`
   const fb      = initials(post.author.firstName, post.author.lastName)
-  const likeCount    = post._count?.likes    ?? 0
+
+  const reactionMap: { [key: string]: string } = {
+    like: '👍',
+    love: '❤️',
+    haha: '😂',
+    wow: '😮',
+    sad: '😢',
+    angry: '😡',
+  }
+
+  const validTypes = ['like','love','haha','wow','sad','angry']
+
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>(() => {
+    const base: Record<string, number> = {}
+    validTypes.forEach(t => base[t] = 0)
+    return base
+  })
+
+  const reactionTotal = Object.values(reactionCounts).reduce((sum, value) => sum + value, 0)
+  const likeCount    = reactionTotal || (post._count?.likes ?? 0)
   const commentCount = post._count?.comments ?? 0
 
   // Close menu on outside click
@@ -67,12 +86,17 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
     try {
       if (liked) {
         await postsApi.unlike(post.id)
+        setReactionCounts(rc => {
+          const next = { ...rc }
+          if (reactionType) next[reactionType] = Math.max(0, (next[reactionType] ?? 1) - 1)
+          return next
+        })
         setLiked(false)
         setReactionType(null)
         setPost(p => ({ ...p, _count: { ...p._count, likes: Math.max(0, (p._count?.likes ?? 0) - 1), comments: p._count?.comments ?? 0 } }))
       } else {
-        // quick like uses default 'like' type
         await postsApi.like(post.id, { type: 'like' })
+        setReactionCounts(rc => ({ ...rc, like: (rc.like ?? 0) + 1 }))
         setLiked(true)
         setReactionType('like')
         setPost(p => ({ ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1, comments: p._count?.comments ?? 0 } }))
@@ -80,19 +104,32 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
     } catch { /* silent */ }
   }
 
-  const reactionMap: { [key: string]: string } = {
-    like: '👍',
-    love: '❤️',
-    haha: '😂',
-    wow: '😮',
-    sad: '😢',
-    angry: '😡',
-  }
+  // Fetch reaction breakdown for this post
+  useEffect(() => {
+    let mounted = true
+    postsApi.getReactions(post.id)
+      .then(d => {
+        if (!mounted) return
+        const base: Record<string, number> = {}
+        validTypes.forEach(t => base[t] = d.breakdown?.[t] ?? 0)
+        setReactionCounts(base)
+      })
+      .catch(() => {})
+    return () => { mounted = false }
+  }, [post.id])
 
   const selectReaction = async (type: string) => {
+    const prev = reactionType
     try {
       await postsApi.like(post.id, { type })
-      // if user previously had no reaction, increment count
+      // update counts locally
+      setReactionCounts(rc => {
+        const next = { ...rc }
+        if (prev) next[prev] = Math.max(0, (next[prev] ?? 1) - 1)
+        next[type] = (next[type] ?? 0) + 1
+        return next
+      })
+      // if user previously had no reaction, increment total likes
       if (!liked) {
         setPost(p => ({ ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1, comments: p._count?.comments ?? 0 } }))
       }
@@ -277,18 +314,20 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
           </div>
         )}
 
-        {(likeCount > 0 || commentCount > 0) && (
-          <div className="flex items-center justify-between px-4 py-2">
-            {likeCount > 0 && (
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded-full bg-[#1877f2] flex items-center justify-center">
-                  <ThumbsUp className="w-2.5 h-2.5 text-white fill-white" />
-                </div>
-                <span className="text-[13px] text-[#65676b]">{likeCount}</span>
-              </div>
-            )}
+        {(Object.values(reactionCounts).some(c => c > 0) || commentCount > 0) && (
+          <div className="flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {validTypes.map(type => (
+                reactionCounts[type] > 0 ? (
+                  <div key={type} className="inline-flex items-center gap-1.5 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] px-3 py-1 text-[13px] text-[#050505] dark:text-[#e4e6eb]">
+                    <span>{reactionMap[type]}</span>
+                    <span className="font-semibold">{reactionCounts[type]}</span>
+                  </div>
+                ) : null
+              ))}
+            </div>
             {commentCount > 0 && (
-              <button onClick={() => setShowComments(p => !p)} className="ml-auto text-[13px] text-[#65676b] hover:underline">
+              <button onClick={() => setShowComments(p => !p)} className="text-[13px] text-[#65676b] hover:underline">
                 {commentCount} {commentCount === 1 ? 'comment' : 'comments'}
               </button>
             )}
@@ -305,16 +344,18 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
               onMouseEnter={() => setShowReactions(true)}
               onMouseLeave={() => setShowReactions(false)}
               onPointerDown={() => {
-                // long-press to open reactions on touch
                 longPressTimer.current = window.setTimeout(() => setShowReactions(true), 400)
               }}
               onPointerUp={() => { if (longPressTimer.current) { window.clearTimeout(longPressTimer.current); longPressTimer.current = null } }}
-              className={`tap-target flex items-center gap-2 w-full justify-center rounded-xl transition-colors font-semibold text-[14px] ${
-                liked ? 'text-[#1877f2]' : 'text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
+              className={`tap-target flex items-center gap-2 w-full justify-center rounded-xl border transition-all duration-150 font-semibold text-[14px] ${
+                liked ? 'border-[#1877f2] bg-[#e7f3ff] text-[#1877f2]' : 'border-transparent text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
               }`}
             >
               <ThumbsUp className={`w-4 h-4 ${liked ? 'fill-[#1877f2] text-[#1877f2]' : ''}`} strokeWidth={liked ? 0 : 2} />
-              {reactionType ? (reactionMap[reactionType] + ' ') : ''}Like
+              {reactionType ? (
+                <span className="inline-flex items-center justify-center w-5 h-5 text-[14px] text-[#1877f2]">{reactionMap[reactionType]}</span>
+              ) : null}
+              Like
             </button>
 
             {showReactions && (
