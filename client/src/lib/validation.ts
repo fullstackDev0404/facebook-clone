@@ -1,5 +1,8 @@
 // ─── Validation utilities for auth forms ─────────────────────────────────────
 
+export const isValidUsername = (v: string): boolean =>
+  /^[a-zA-Z0-9_]{3,20}$/.test(v)
+
 export const isValidEmail = (v: string): boolean =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
 
@@ -24,6 +27,7 @@ export const validateLogin = (
 interface SignupFields {
   firstName: string
   lastName: string
+  username: string
   email: string
   password: string
   dob: string
@@ -34,6 +38,8 @@ export const validateSignup = (fields: SignupFields): Record<string, string> => 
   const errors: Record<string, string> = {}
   if (!fields.firstName.trim())           errors.firstName = 'First name is required'
   if (!fields.lastName.trim())            errors.lastName  = 'Last name is required'
+  if (!fields.username.trim())            errors.username  = 'Username is required'
+  else if (!isValidUsername(fields.username)) errors.username = 'Username must be 3-20 characters, letters, numbers, and underscores only'
   if (!fields.email.trim())               errors.email     = 'Email or phone is required'
   else if (!isValidEmailOrPhone(fields.email)) errors.email = 'Enter a valid email or phone number'
   if (!fields.password)                   errors.password  = 'Password is required'

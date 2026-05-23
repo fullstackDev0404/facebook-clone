@@ -18,7 +18,7 @@ const inputCls = (hasError: boolean) =>
       : 'border-[#dddfe2] bg-[#f5f6f7] focus:bg-white focus:border-[#1877f2] focus:ring-2 focus:ring-[#1877f2]/20'
   } text-[#1c1e21] placeholder-[#8a8d91]`
 
-type Fields = { firstName: string; lastName: string; email: string; password: string; dob: string; gender: string }
+type Fields = { firstName: string; lastName: string; username: string; email: string; password: string; dob: string; gender: string }
 
 const SignupPage = () => {
   const router = useRouter()
@@ -27,7 +27,7 @@ const SignupPage = () => {
   const [showPw, setShowPw]     = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [errors, setErrors]     = useState<Record<string, string>>({})
-  const [fields, setFields]     = useState<Fields>({ firstName: '', lastName: '', email: '', password: '', dob: '', gender: '' })
+  const [fields, setFields]     = useState<Fields>({ firstName: '', lastName: '', username: '', email: '', password: '', dob: '', gender: '' })
 
   const set = (k: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement>) => setFields(f => ({ ...f, [k]: e.target.value }))
   const err = (k: string) => submitted ? errors[k] : undefined
@@ -82,6 +82,12 @@ const SignupPage = () => {
                     {err(k) && <p className="text-red-500 text-[11px] mt-1 px-1">{err(k)}</p>}
                   </div>
                 ))}
+              </div>
+
+              <div>
+                <input type="text" placeholder="Username (e.g. john_doe)" value={fields.username}
+                  onChange={set('username')} autoComplete="username" className={inputCls(!!err('username'))} />
+                {err('username') && <p className="text-red-500 text-[11px] mt-1 px-1">{err('username')}</p>}
               </div>
 
               <div>

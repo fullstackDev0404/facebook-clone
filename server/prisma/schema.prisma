@@ -32,6 +32,7 @@ model User {
   receivedMessages Message[]     @relation("ReceivedMessages")
   notifications    Notification[]
   stories          Story[]
+  taggedIn         PostTag[]
 
   @@map("users")
 }
@@ -40,6 +41,7 @@ model Post {
   id        String   @id @default(cuid())
   content   String?
   image     String?
+  video     String?
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -47,8 +49,21 @@ model Post {
   author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments Comment[]
   likes    Like[]
+  tags     PostTag[]
 
   @@map("posts")
+}
+
+model PostTag {
+  id        String @id @default(cuid())
+  postId    String
+  userId    String
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_tags")
 }
 
 model Comment {

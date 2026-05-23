@@ -27,8 +27,10 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   }
   
   const [post, setPost]                   = useState(initial)
-  const [liked, setLiked]                 = useState(false)
+  const [liked, setLiked]                 = useState(Boolean(initial.userReactionType))
+  const [reactionType, setReactionType]   = useState<string | null>(initial.userReactionType ?? null)
   const [showComments, setShowComments]   = useState(false)
+  const [showReactions, setShowReactions] = useState(false)
   const [menuOpen, setMenuOpen]           = useState(false)
   const [editing, setEditing]             = useState(false)
   const [editText, setEditText]           = useState(post.content ?? '')
@@ -37,6 +39,8 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const [deleting, setDeleting]           = useState(false)
   const [editError, setEditError]         = useState('')
   const menuRef                           = useRef<HTMLDivElement>(null)
+  const reactionsRef                       = useRef<HTMLDivElement | null>(null)
+  const longPressTimer                     = useRef<number | null>(null)
 
   const isOwner = user?.id === post.author.id
   const name    = `${post.author.firstName} ${post.author.lastName}`
@@ -54,18 +58,51 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Cleanup any timers on unmount
+  useEffect(() => {
+    return () => { if (longPressTimer.current) window.clearTimeout(longPressTimer.current) }
+  }, [])
+
   const handleLike = async () => {
     try {
       if (liked) {
         await postsApi.unlike(post.id)
         setLiked(false)
+        setReactionType(null)
         setPost(p => ({ ...p, _count: { ...p._count, likes: Math.max(0, (p._count?.likes ?? 0) - 1), comments: p._count?.comments ?? 0 } }))
       } else {
-        await postsApi.like(post.id)
+        // quick like uses default 'like' type
+        await postsApi.like(post.id, { type: 'like' })
         setLiked(true)
+        setReactionType('like')
         setPost(p => ({ ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1, comments: p._count?.comments ?? 0 } }))
       }
     } catch { /* silent */ }
+  }
+
+  const reactionMap: { [key: string]: string } = {
+    like: '👍',
+    love: '❤️',
+    haha: '😂',
+    wow: '😮',
+    sad: '😢',
+    angry: '😡',
+  }
+
+  const selectReaction = async (type: string) => {
+    try {
+      await postsApi.like(post.id, { type })
+      // if user previously had no reaction, increment count
+      if (!liked) {
+        setPost(p => ({ ...p, _count: { ...p._count, likes: (p._count?.likes ?? 0) + 1, comments: p._count?.comments ?? 0 } }))
+      }
+      setLiked(true)
+      setReactionType(type)
+    } catch {
+      // silent
+    } finally {
+      setShowReactions(false)
+    }
   }
 
   const handleSaveEdit = async () => {
@@ -230,6 +267,16 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
           </div>
         )}
 
+        {post.video && (
+          <div className="w-full bg-black overflow-hidden">
+            <video
+              src={avatarSrc(post.video)}
+              controls
+              className="w-full max-h-125 object-contain"
+            />
+          </div>
+        )}
+
         {(likeCount > 0 || commentCount > 0) && (
           <div className="flex items-center justify-between px-4 py-2">
             {likeCount > 0 && (
@@ -251,22 +298,53 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
         <div className="mx-4 border-t border-[#ced0d4] dark:border-[#3e4042]" />
 
         <div className="flex items-center px-2 py-1">
-          {[
-            { label: 'Like',    icon: ThumbsUp,      onClick: handleLike,                    active: liked },
-            { label: 'Comment', icon: MessageCircle,  onClick: () => setShowComments(p => !p), active: false },
-            { label: 'Share',   icon: Share2,         onClick: () => {},                       active: false },
-          ].map(({ label, icon: Icon, onClick, active }) => (
+          {/* Like button with reaction picker */}
+          <div className="relative flex-1 flex items-center justify-center">
             <button
-              key={label}
-              onClick={onClick}
-              className={`flex items-center gap-2 flex-1 justify-center py-2 rounded-xl transition-colors font-semibold text-[14px] ${
-                active ? 'text-[#1877f2]' : 'text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
+              onClick={handleLike}
+              onMouseEnter={() => setShowReactions(true)}
+              onMouseLeave={() => setShowReactions(false)}
+              onPointerDown={() => {
+                // long-press to open reactions on touch
+                longPressTimer.current = window.setTimeout(() => setShowReactions(true), 400)
+              }}
+              onPointerUp={() => { if (longPressTimer.current) { window.clearTimeout(longPressTimer.current); longPressTimer.current = null } }}
+              className={`tap-target flex items-center gap-2 w-full justify-center rounded-xl transition-colors font-semibold text-[14px] ${
+                liked ? 'text-[#1877f2]' : 'text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
               }`}
             >
-              <Icon className={`w-4 h-4 ${active ? 'fill-[#1877f2] text-[#1877f2]' : ''}`} strokeWidth={active ? 0 : 2} />
-              {label}
+              <ThumbsUp className={`w-4 h-4 ${liked ? 'fill-[#1877f2] text-[#1877f2]' : ''}`} strokeWidth={liked ? 0 : 2} />
+              {reactionType ? (reactionMap[reactionType] + ' ') : ''}Like
             </button>
-          ))}
+
+            {showReactions && (
+              <div
+                ref={reactionsRef}
+                onMouseEnter={() => setShowReactions(true)}
+                onMouseLeave={() => setShowReactions(false)}
+                className="absolute -top-14 left-1/2 transform -translate-x-1/2 bg-white dark:bg-[#242526] rounded-2xl px-3 py-2 flex items-center gap-2 shadow-xl z-50"
+                style={{ boxShadow: '0 6px 24px rgba(0,0,0,0.18)' }}
+              >
+                {Object.entries(reactionMap).map(([type, emoji]) => (
+                  <button
+                    key={type}
+                    onClick={() => selectReaction(type)}
+                    className={`w-9 h-9 flex items-center justify-center rounded-full text-[18px] transition-transform hover:scale-110 ${reactionType === type ? 'ring-2 ring-[#1877f2]' : ''}`}
+                  >
+                    <span>{emoji}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Comment and Share buttons */}
+          <button onClick={() => setShowComments(p => !p)} className="tap-target flex items-center gap-2 flex-1 justify-center rounded-xl transition-colors font-semibold text-[14px] text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]">
+            <MessageCircle className="w-4 h-4" /> Comment
+          </button>
+          <button onClick={() => {}} className="tap-target flex items-center gap-2 flex-1 justify-center rounded-xl transition-colors font-semibold text-[14px] text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]">
+            <Share2 className="w-4 h-4" /> Share
+          </button>
         </div>
 
         {showComments && <CommentSection postId={post.id} onCommentAdded={onCommentAdded} />}

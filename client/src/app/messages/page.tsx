@@ -76,8 +76,15 @@ const MessagesPage = () => {
   }, [selectedContact])
 
   useEffect(() => {
+    if (!user) return
+
     const socket = connectSocket()
     socketRef.current = socket
+
+    if (!socket) {
+      setSocketConnected(false)
+      return
+    }
 
     const handleConnect = () => setSocketConnected(true)
     const handleDisconnect = () => setSocketConnected(false)
@@ -99,7 +106,7 @@ const MessagesPage = () => {
       socket.off('message:new', handleMessage)
       disconnectSocket()
     }
-  }, [])
+  }, [user])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })

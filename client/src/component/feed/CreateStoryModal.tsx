@@ -133,7 +133,7 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated }: Props) => {
             ) : (
               <div className="relative w-full h-48 rounded-2xl overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                <img src={preview} alt="Preview" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                 <button
                   onClick={removeImage}
                   className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center text-white transition-colors"

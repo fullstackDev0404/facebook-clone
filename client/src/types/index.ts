@@ -9,18 +9,23 @@ export interface Author {
 
 export interface User extends Author {
   email: string
+  username?: string
   name?: string
   bio?: string
+  dob?: string
+  gender?: string
 }
 
 export interface PostRecord {
   id: string
   content: string | null
   image: string | null
+  video: string | null
   authorId: string
   createdAt: string
   updatedAt: string
   author: Author
+  tags?: { user: Author }[]
   _count?: { likes: number; comments: number }
 }
 

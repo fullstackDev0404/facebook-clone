@@ -5,6 +5,7 @@ import { ArrowLeft, Camera, X, Save } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
 import { API_BASE_URL, STORAGE_KEYS } from '@/lib/constants'
+import { avatarSrc } from '@/component/feed/feedUtils'
 
 const getInitials = (name: string) =>
   name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
@@ -15,9 +16,13 @@ export default function EditProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    bio: user?.bio || '',
+    firstName: '',
+    lastName: '',
+    username: '',
+    bio: '',
+    email: '',
+    dob: '',
+    gender: '',
   })
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
@@ -25,13 +30,39 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
 
+  // Update form data when user data becomes available
+  useEffect(() => {
+    if (user) {
+      // Format date for HTML date input (YYYY-MM-DD)
+      const formatDateForInput = (dateString: string | undefined) => {
+        if (!dateString) return ''
+        try {
+          const date = new Date(dateString)
+          return date.toISOString().split('T')[0]
+        } catch {
+          return ''
+        }
+      }
+
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        username: user.username || '',
+        bio: user.bio || '',
+        email: user.email || '',
+        dob: formatDateForInput(user.dob),
+        gender: user.gender || '',
+      })
+    }
+  }, [user])
+
   useEffect(() => {
     if (!user) {
       router.push('/login')
     }
   }, [user, router])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
@@ -84,7 +115,11 @@ export default function EditProfilePage() {
       // Add text fields only if changed
       if (formData.firstName !== user?.firstName) data.append('firstName', formData.firstName)
       if (formData.lastName !== user?.lastName) data.append('lastName', formData.lastName)
+      if (formData.username !== user?.username) data.append('username', formData.username)
       if (formData.bio !== user?.bio) data.append('bio', formData.bio)
+      if (formData.email !== user?.email) data.append('email', formData.email)
+      if (formData.dob !== user?.dob) data.append('dob', formData.dob)
+      if (formData.gender !== user?.gender) data.append('gender', formData.gender)
       
       // Add avatar if changed
       if (avatarFile) {
@@ -162,13 +197,13 @@ export default function EditProfilePage() {
           
           <div className="flex items-center gap-6">
             {/* Avatar Display */}
-            <div className="relative">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={avatarPreview || undefined} />
-                <AvatarFallback className="bg-[#1877f2] text-white text-3xl font-bold">
-                  {currentInitials}
-                </AvatarFallback>
-              </Avatar>
+             <div className="relative">
+               <Avatar className="w-24 h-24">
+                 <AvatarImage src={avatarPreview || avatarSrc(user?.avatar ?? null)} />
+                 <AvatarFallback className="bg-[#1877f2] text-white text-3xl font-bold">
+                   {currentInitials}
+                 </AvatarFallback>
+               </Avatar>
               
               {/* Upload Button */}
               <button
@@ -208,7 +243,7 @@ export default function EditProfilePage() {
 
         {/* Basic Info Section */}
         <div className="bg-white dark:bg-[#242526] rounded-lg p-6 mb-6">
-          <h2 className="text-lg font-bold text-[#050505] dark:text-[#e4e6eb] mb-4">Basic Information</h2>
+          <h2 className="text-lg font-bold text-[#050505] dark:text-[#e4e6eb] mb-4">Personal Information</h2>
           
           <div className="space-y-4">
             {/* First Name */}
@@ -239,6 +274,24 @@ export default function EditProfilePage() {
               />
             </div>
 
+            {/* Username */}
+            <div>
+              <label className="block text-[14px] font-semibold text-[#050505] dark:text-[#e4e6eb] mb-2">
+                Username
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+                placeholder="e.g. john_doe"
+                className="w-full px-4 py-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] border border-[#dddfe2] dark:border-[#3e4042] rounded-lg text-[#050505] dark:text-[#e4e6eb] focus:outline-none focus:border-[#1877f2]"
+              />
+              <p className="text-[12px] text-[#65676b] dark:text-[#b0b3b8] mt-1">
+                Your username will appear as @{formData.username || 'username'}
+              </p>
+            </div>
+
             {/* Bio */}
             <div>
               <label className="block text-[14px] font-semibold text-[#050505] dark:text-[#e4e6eb] mb-2">
@@ -252,6 +305,54 @@ export default function EditProfilePage() {
                 rows={4}
                 className="w-full px-4 py-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] border border-[#dddfe2] dark:border-[#3e4042] rounded-lg text-[#050505] dark:text-[#e4e6eb] focus:outline-none focus:border-[#1877f2] resize-none"
               />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="block text-[14px] font-semibold text-[#050505] dark:text-[#e4e6eb] mb-2">
+                Email
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="your.email@example.com"
+                className="w-full px-4 py-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] border border-[#dddfe2] dark:border-[#3e4042] rounded-lg text-[#050505] dark:text-[#e4e6eb] focus:outline-none focus:border-[#1877f2]"
+              />
+            </div>
+
+            {/* Date of Birth */}
+            <div>
+              <label className="block text-[14px] font-semibold text-[#050505] dark:text-[#e4e6eb] mb-2">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                name="dob"
+                value={formData.dob}
+                onChange={handleInputChange}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-full px-4 py-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] border border-[#dddfe2] dark:border-[#3e4042] rounded-lg text-[#050505] dark:text-[#e4e6eb] focus:outline-none focus:border-[#1877f2]"
+              />
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className="block text-[14px] font-semibold text-[#050505] dark:text-[#e4e6eb] mb-2">
+                Gender
+              </label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] border border-[#dddfe2] dark:border-[#3e4042] rounded-lg text-[#050505] dark:text-[#e4e6eb] focus:outline-none focus:border-[#1877f2]"
+              >
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Custom">Custom</option>
+              </select>
             </div>
           </div>
         </div>

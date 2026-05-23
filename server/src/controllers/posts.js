@@ -8,6 +8,11 @@ const POST_INCLUDE = {
     _count: {
         select: { likes: true, comments: true },
     },
+    tags: {
+        include: {
+            user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+        },
+    },
 }
 
 /**
@@ -52,8 +57,21 @@ const getFeed = async (req, res, next) => {
             }),
         ])
 
+        // Now re-query user reactions for the actual post IDs (fix bug: earlier we queried by author IDs)
+        const postIds = posts.map(p => p.id)
+        const reactions = await prisma.like.findMany({ where: { postId: { in: postIds }, userId }, select: { postId: true, type: true } })
+
+        // Attach user's reaction type to each post
+        const postsWithReaction = posts.map(post => {
+            const userReaction = reactions.find(r => r.postId === post.id)
+            return {
+                ...post,
+                userReactionType: userReaction ? userReaction.type : null,
+            }
+        })
+
         res.json({
-            posts,
+            posts: postsWithReaction,
             pagination: {
                 page,
                 limit,
@@ -75,21 +93,50 @@ const getFeed = async (req, res, next) => {
 const createPost = async (req, res, next) => {
     try {
         const content = req.body.content?.trim() || null
+        const feeling = req.body.feeling?.trim() || null
+        const taggedIds = req.body.taggedIds
+            ? JSON.parse(req.body.taggedIds).filter(Boolean)
+            : []
         const imagePath = req.file ? `uploads/posts/${req.file.filename}` : null
 
-        // At least one of content or image must be present
-        if (!content && !imagePath) {
-            return res.status(400).json({ error: 'Post must have text content or an image' })
+        const isVideo = req.file && req.file.mimetype.startsWith('video/')
+        const videoPath = isVideo ? imagePath : null
+        const photoPath = isVideo ? null : imagePath
+
+        if (!content && !photoPath && !videoPath && !feeling) {
+            return res.status(400).json({ error: 'Post must have text, an image, a video, or a feeling' })
         }
+
+        const finalContent = feeling
+            ? `${content ?? ''}${content ? ' — ' : ''}feeling ${feeling}`
+            : content
 
         const post = await prisma.post.create({
             data: {
-                content,
-                image: imagePath,
+                content: finalContent,
+                image: photoPath,
+                video: videoPath,
                 authorId: req.user.id,
+                tags: taggedIds.length
+                    ? { create: taggedIds.map(uid => ({ userId: uid })) }
+                    : undefined,
             },
             include: POST_INCLUDE,
         })
+
+        // Notify each tagged user
+        if (taggedIds.length) {
+            await prisma.notification.createMany({
+                data: taggedIds.map(uid => ({
+                    type: 'tag',
+                    message: `${req.user.firstName} ${req.user.lastName} tagged you in a post`,
+                    userId: uid,
+                    actorId: req.user.id,
+                    entityId: post.id,
+                })),
+                skipDuplicates: true,
+            })
+        }
 
         res.status(201).json({ post })
     } catch (err) {
@@ -293,4 +340,43 @@ const deletePost = async (req, res, next) => {
     }
 }
 
-module.exports = { createPost, getFeed, likePost, unlikePost, getComments, createComment, updatePost, deletePost }
+/**
+ * GET /api/posts/:id/likes
+ * Returns reaction breakdown by type for a post.
+ */
+const getPostLikes = async (req, res, next) => {
+  try {
+    const postId = req.params.id
+
+    // Check post exists
+    const post = await prisma.post.findUnique({ where: { id: postId } })
+    if (!post) return res.status(404).json({ error: 'Post not found' })
+
+    // Group likes by type and count
+    const likes = await prisma.like.groupBy({
+      by: ['type'],
+      where: { postId },
+      _count: { type: true },
+    })
+
+    // Build breakdown object
+    const breakdown = {}
+    for (const { type, _count } of likes) {
+      breakdown[type] = _count
+    }
+
+    // Ensure all reaction types are present (with zero count)
+    const validTypes = ['like', 'love', 'haha', 'wow', 'sad', 'angry']
+    validTypes.forEach(type => {
+      if (!(type in breakdown)) {
+        breakdown[type] = 0
+      }
+    })
+
+    res.json({ breakdown })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { createPost, getFeed, likePost, unlikePost, getComments, createComment, updatePost, deletePost, getPostLikes }

@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
 const path = require('path')
+const uploadAvatar = require('../lib/uploadAvatar')
 
 // Public profile data
 const getProfile = async (req, res, next) => {
@@ -123,13 +124,15 @@ const updateProfile = async (req, res, next) => {
     if (typeof bio === 'string')                           data.bio       = bio.trim()
 
     if (req.file) {
-      // store the relative path to avatar
-      const avatarPath = path.join('uploads', 'avatars', req.file.filename)
+      // /avatars/* to db — always forward-slashes for browser URLs
+      const avatarPath = uploadAvatar.toUrlPath(path.join('uploads', 'avatars', req.file.filename))
 
       // remove previous avatar file if exists and is local
       const current = await prisma.user.findUnique({ where: { id: userId }, select: { avatar: true } })
-      if (current && current.avatar && current.avatar.startsWith('uploads/')) {
-        const oldPath = path.join(process.cwd(), current.avatar)
+      if (current?.avatar?.startsWith('uploads/')) {
+        // normalize any legacy backslash path before building the FS path
+        const cleanPath = current.avatar.replace(/\\/g, '/')
+        const oldPath   = path.join(process.cwd(), cleanPath)
         try { fs.unlinkSync(oldPath) } catch (e) { /* ignore */ }
       }
 

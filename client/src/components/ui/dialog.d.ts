@@ -3,6 +3,7 @@ import * as React from 'react'
 export type DialogContentProps = React.PropsWithChildren<{
   showCloseButton?: boolean
   className?: string
+  style?: React.CSSProperties
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }>

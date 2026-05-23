@@ -6,6 +6,7 @@ import {
     Menu, LogOut, Settings, User, X,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { avatarSrc } from '@/component/feed/feedUtils'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
 import { notificationsApi } from '@/lib/api'
@@ -18,8 +19,7 @@ const NAV_ITEMS = [
     { icon: Store, label: 'Marketplace', href: null       },
 ]
 
-const getInitials = (name: string) =>
-    name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
+
 
 const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const { user, logout } = useAuth()
@@ -74,7 +74,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     }, [])
 
     const handleLogout = () => { logout(); router.push('/login') }
-    const initials = getInitials(user?.name || '')
+    const fullName = user ? `${user.firstName} ${user.lastName}` : ''
+    const initials = user
+        ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase()
+        : 'U'
+    const headerAvatarSrc = avatarSrc(user?.avatar ?? null)
 
     const handleNavClick = (_label: string, href: string | null) => {
         if (href) router.push(href)
@@ -192,10 +196,10 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                 profileOpen ? 'bg-[#e7f3ff] dark:bg-[#263951]' : 'hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
                             }`}
                         >
-                            <Avatar className="w-9 h-9">
-                                <AvatarImage className="" />
-                                <AvatarFallback className="bg-[#1877f2] text-white text-sm font-bold">{initials}</AvatarFallback>
-                            </Avatar>
+                        <Avatar className="w-9 h-9">
+                            <AvatarImage src={headerAvatarSrc} className="" />
+                            <AvatarFallback className="bg-[#1877f2] text-white text-sm font-bold">{initials}</AvatarFallback>
+                        </Avatar>
                         </button>
 
                         {profileOpen && (
@@ -207,12 +211,15 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                         setProfileOpen(false)
                                     }}
                                     className="flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors w-full text-left">
-                                    <Avatar className="w-14 h-14 shrink-0">
-                                        <AvatarImage className="" />
-                                        <AvatarFallback className="bg-[#1877f2] text-white text-xl font-bold">{initials}</AvatarFallback>
-                                    </Avatar>
+                            <Avatar className="w-14 h-14 shrink-0">
+                                <AvatarImage src={headerAvatarSrc} className="" />
+                                <AvatarFallback className="bg-[#1877f2] text-white text-xl font-bold">{initials}</AvatarFallback>
+                            </Avatar>
                                     <div>
-                                        <p className="font-semibold text-[15px] text-[#050505] dark:text-[#e4e6eb]">{user?.name}</p>
+                                        <p className="font-semibold text-[15px] text-[#050505] dark:text-[#e4e6eb]">{fullName}</p>
+                                        {user?.username && (
+                                            <p className="text-[12px] text-[#65676b] dark:text-[#b0b3b8] font-medium">@{user.username}</p>
+                                        )}
                                         <p className="text-[13px] text-[#1877f2] font-medium mt-0.5">See your profile</p>
                                     </div>
                                 </button>
@@ -228,7 +235,10 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                     <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
                                         <Settings className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
                                     </div>
-                                    Settings & privacy
+                                    <div className="text-left">
+                                        <p className="text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]">Edit profile</p>
+                                        <p className="text-[12px] text-[#65676b]">Name, username, avatar, bio</p>
+                                    </div>
                                 </button>
 
                                 <button 

@@ -7,9 +7,8 @@ import {
     Store, Tv, MessageCircle, Gamepad2, CalendarDays, X,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import { avatarSrc } from '@/component/feed/feedUtils'
 
-const getInitials = (name: string) =>
-    name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
 const navItems = [
     { icon: Home,         label: 'Home',        color: '#1877f2', bg: '#e7f3ff', href: '/'           },
@@ -32,7 +31,8 @@ interface Props {
 const LeftSidebar = ({ onClose, showCloseButton }: Props) => {
     const { user } = useAuth()
     const router   = useRouter()
-    const initials = getInitials(user?.name || '')
+    const fullName = user ? `${user.firstName} ${user.lastName}` : ''
+    const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : 'U'
     const [activeItem, setActiveItem] = useState('Home')
 
     return (
@@ -70,13 +70,13 @@ const LeftSidebar = ({ onClose, showCloseButton }: Props) => {
                     onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                     <Avatar className="w-9 h-9 shrink-0">
-                        <AvatarImage className="" />
+                        <AvatarImage src={avatarSrc(user?.avatar ?? null)} />
                         <AvatarFallback className="bg-[#1877f2] text-white font-bold text-sm">
                             {initials}
                         </AvatarFallback>
                     </Avatar>
                     <span className="font-semibold truncate" style={{ fontSize: 15, color: '#050505' }}>
-                        {user?.name || 'Your Name'}
+                        {fullName || 'Your Name'}
                     </span>
                 </button>
 

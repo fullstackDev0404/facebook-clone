@@ -5,15 +5,15 @@ let socket: Socket | null = null
 
 const getSocketBaseUrl = (): string => API_BASE_URL.replace(/\/api$/, '')
 
-const createSocket = (): Socket => {
+const createSocket = (): Socket | null => {
   if (typeof window === 'undefined') {
-    throw new Error('Socket can only be created in the browser')
+    return null
   }
 
   if (!socket) {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
     if (!token) {
-      throw new Error('Missing auth token for socket connection')
+      return null
     }
 
     socket = io(getSocketBaseUrl(), {
@@ -26,8 +26,10 @@ const createSocket = (): Socket => {
   return socket
 }
 
-export const connectSocket = (): Socket => {
+export const connectSocket = (): Socket | null => {
   const socketClient = createSocket()
+  if (!socketClient) return null
+
   if (!socketClient.connected) {
     socketClient.connect()
   }
