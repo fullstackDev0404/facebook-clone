@@ -46,6 +46,11 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const name    = `${post.author.firstName} ${post.author.lastName}`
   const fb      = initials(post.author.firstName, post.author.lastName)
 
+  const menuItemBase = 'flex items-center gap-3 w-full px-4 py-2.5 rounded-xl transition-colors text-[14px] font-medium'
+  const menuItemHover = 'hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
+  const destructiveMenuItem = `${menuItemBase} bg-transparent dark:bg-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20`
+  const standardMenuItem = `${menuItemBase} ${menuItemHover} text-[#050505] dark:text-[#e4e6eb]`
+
   const reactionMap: { [key: string]: string } = {
     like: '👍',
     love: '❤️',
@@ -237,14 +242,14 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
                   <>
                     <button
                       onClick={() => { setEditing(true); setEditText(post.content ?? ''); setMenuOpen(false) }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]"
+                      className={standardMenuItem}
                     >
                       <Pencil className="w-4 h-4 text-[#65676b]" />
                       Edit post
                     </button>
                     <button
                       onClick={() => { setMenuOpen(false); setDeleteOpen(true) }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl bg-transparent hover:bg-red-50 dark:bg-transparent dark:hover:bg-red-900/20 transition-colors text-[14px] font-medium text-red-500"
+                      className={destructiveMenuItem}
                     >
                       <Trash2 className="w-4 h-4" />
                       Delete post
@@ -253,7 +258,7 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
                 ) : (
                   <button
                     onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]"
+                    className={standardMenuItem}
                   >
                     Hide post
                   </button>
@@ -347,14 +352,13 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
                 longPressTimer.current = window.setTimeout(() => setShowReactions(true), 400)
               }}
               onPointerUp={() => { if (longPressTimer.current) { window.clearTimeout(longPressTimer.current); longPressTimer.current = null } }}
-              className={`tap-target flex items-center gap-2 w-full justify-center rounded-xl border transition-all duration-150 font-semibold text-[14px] ${
+              aria-label={liked ? 'Unlike' : 'Like'}
+              title={liked ? 'Unlike' : 'Like'}
+              className={`tap-target flex items-center gap-2 justify-center w-full rounded-xl border transition-all duration-150 text-[14px] ${
                 liked ? 'border-[#1877f2] bg-[#e7f3ff] text-[#1877f2]' : 'border-transparent text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
               }`}
             >
               <ThumbsUp className={`w-4 h-4 ${liked ? 'fill-[#1877f2] text-[#1877f2]' : ''}`} strokeWidth={liked ? 0 : 2} />
-              {reactionType ? (
-                <span className="inline-flex items-center justify-center w-5 h-5 text-[14px] text-[#1877f2]">{reactionMap[reactionType]}</span>
-              ) : null}
               Like
             </button>
 

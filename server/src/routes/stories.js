@@ -1,6 +1,8 @@
 const router = require('express').Router()
 const auth = require('../middleware/auth')
 const { createStory, getFeed, deleteStory } = require('../controllers/stories')
+const validate = require('../middleware/zodValidate')
+const { createStorySchema } = require('../validation/stories')
 const multer = require('multer')
 const path   = require('path')
 const fs     = require('fs')
@@ -8,9 +10,6 @@ const fs     = require('fs')
 // ── Multer for story image uploads ─────────────────────────────────────────────
 
 const storyUploadDir = path.join(process.cwd(), 'uploads', 'stories')
-if (!fs.existsSync(storyUploadDir)) {
-    fs.mkdirSync(storyUploadDir, { recursive: true })
-}
 
 const storyStorage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, storyUploadDir),
@@ -49,8 +48,16 @@ const handleUpload = (req, res, next) => {
 // GET /api/stories/feed — paginated stories feed (own + accepted friends, non-expired)
 router.get('/feed', auth, getFeed)
 
-// POST /api/stories — create a story (image only, expires in 24 h)
-router.post('/', auth, handleUpload, createStory)
+// POST /api/stories — create a story (image or text, expires in 24 h)
+// require at least an uploaded file or non-empty text field
+const requireFileOrText = (req, res, next) => {
+    if (req.file) return next()
+    const text = req.body?.text
+    if (typeof text === 'string' && text.trim().length > 0) return next()
+    return res.status(400).json({ error: 'Story must include an image or text content' })
+}
+
+router.post('/', auth, handleUpload, validate({ body: createStorySchema }), requireFileOrText, createStory)
 
 // DELETE /api/stories/:id — delete a story (author only)
 router.delete('/:id', auth, deleteStory)

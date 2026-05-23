@@ -1,0 +1,8 @@
+const { z } = require('zod')
+
+const sendMessageSchema = z.object({
+  receiverId: z.string().min(1),
+  content: z.string().min(1),
+})
+
+module.exports = { sendMessageSchema }

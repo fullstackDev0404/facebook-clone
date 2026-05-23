@@ -2,11 +2,8 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 
-// Ensure avatar upload directory exists (OS-native path — filesystem only)
+// Avatar upload directory (created at server startup via initUploads.ensureUploadDirs)
 const uploadDir = path.join(process.cwd(), 'uploads', 'avatars')
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true })
-}
 
 const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, uploadDir),

@@ -127,13 +127,17 @@ const updateProfile = async (req, res, next) => {
       // /avatars/* to db — always forward-slashes for browser URLs
       const avatarPath = uploadAvatar.toUrlPath(path.join('uploads', 'avatars', req.file.filename))
 
-      // remove previous avatar file if exists and is local
+      // remove previous avatar file if exists and is local (async)
       const current = await prisma.user.findUnique({ where: { id: userId }, select: { avatar: true } })
       if (current?.avatar?.startsWith('uploads/')) {
         // normalize any legacy backslash path before building the FS path
         const cleanPath = current.avatar.replace(/\\/g, '/')
         const oldPath   = path.join(process.cwd(), cleanPath)
-        try { fs.unlinkSync(oldPath) } catch (e) { /* ignore */ }
+        try {
+          await fs.promises.unlink(oldPath)
+        } catch (e) {
+          // ignore errors (file may already be removed)
+        }
       }
 
       data.avatar = avatarPath

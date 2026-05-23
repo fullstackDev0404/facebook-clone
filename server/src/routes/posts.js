@@ -19,10 +19,14 @@ const handleUpload = (req, res, next) => {
 router.get('/feed', auth, getFeed)
 
 // POST /api/posts — create a post (text + optional image)
-router.post('/', auth, handleUpload, createPost)
+const validate = require('../middleware/zodValidate')
+const { createPostSchema, updatePostSchema } = require('../validation/posts')
+
+// For multipart posts, allow optional content/feeling/taggedIds; controller will enforce at least one present
+router.post('/', auth, handleUpload, validate({ body: createPostSchema }), createPost)
 
 // PATCH /api/posts/:id — edit a post (author only)
-router.patch('/:id', auth, updatePost)
+router.patch('/:id', auth, validate({ body: updatePostSchema }), updatePost)
 
 // DELETE /api/posts/:id — delete a post (author only)
 router.delete('/:id', auth, deletePost)

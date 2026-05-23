@@ -1,5 +1,18 @@
+const logger = require('../lib/logger')
+
 const errorHandler = (err, req, res, next) => {
-    console.error(`[${new Date().toISOString()}] ${err.stack}`)
+    const meta = {
+        reqId: req?.id,
+        url: req?.originalUrl,
+        method: req?.method,
+        status: err.status || err.statusCode || 500,
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+        logger.error({ ...meta, err }, err.stack)
+    } else {
+        logger.error({ ...meta, error: err.message })
+    }
 
     // Prisma known errors
     if (err.code === 'P2002') {

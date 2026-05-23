@@ -1,6 +1,8 @@
 const { Server } = require('socket.io')
 const jwt = require('jsonwebtoken')
-const prisma = require('./prisma')
+const crypto = require('crypto')
+const prisma = require('../lib/prisma')
+const logger = require('../lib/logger')
 
 let io
 
@@ -33,10 +35,13 @@ const initSocket = (server) => {
   })
 
   io.on('connection', (socket) => {
+    socket.requestId = crypto.randomUUID()
     socket.join(socket.user.id)
     socket.emit('socket:connected', { userId: socket.user.id })
+    logger.info({ event: 'socket:connected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId })
 
     socket.on('send_message', async (payload, callback) => {
+      logger.info({ event: 'socket:send_message', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, payload: { receiverId: payload?.receiverId } })
       try {
         const { receiverId, content } = payload || {}
         if (!receiverId || typeof receiverId !== 'string') {
@@ -72,13 +77,16 @@ const initSocket = (server) => {
         io.to(receiverId).emit('message:new', { message })
         io.to(socket.user.id).emit('message:new', { message })
 
+        logger.info({ event: 'message:sent', socketId: socket.id, userId: socket.user.id, receiverId, reqId: socket.requestId })
         callback?.({ success: true, message })
       } catch (err) {
+        logger.error({ event: 'message:error', socketId: socket.id, userId: socket.user.id, error: err.message, reqId: socket.requestId })
         if (typeof callback === 'function') callback({ success: false, error: err.message })
       }
     })
 
     socket.on('disconnect', () => {
+      logger.info({ event: 'socket:disconnected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId })
       socket.leave(socket.user.id)
     })
   })
