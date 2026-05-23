@@ -37,6 +37,7 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const [saving, setSaving]               = useState(false)
   const [deleteOpen, setDeleteOpen]       = useState(false)
   const [deleting, setDeleting]           = useState(false)
+  const [shareStatus, setShareStatus]     = useState<'Share' | 'Copied!' | 'Shared'>('Share')
   const [editError, setEditError]         = useState('')
   const menuRef                           = useRef<HTMLDivElement>(null)
   const reactionsRef                       = useRef<HTMLDivElement | null>(null)
@@ -61,6 +62,28 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   }
 
   const validTypes = ['like','love','haha','wow','sad','angry']
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}#post-${post.id}`
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Check out this post',
+          text: post.content ? post.content.slice(0, 120) : 'Check out this post',
+          url: shareUrl,
+        })
+        setShareStatus('Shared')
+      } else {
+        await navigator.clipboard.writeText(shareUrl)
+        setShareStatus('Copied!')
+      }
+    } catch (error) {
+      setShareStatus('Share')
+    }
+
+    window.setTimeout(() => setShareStatus('Share'), 1500)
+  }
 
   const [reactionCounts, setReactionCounts] = useState<Record<string, number>>(() => {
     const base: Record<string, number> = {}
@@ -387,8 +410,11 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
           <button onClick={() => setShowComments(p => !p)} className="tap-target flex items-center gap-2 flex-1 justify-center rounded-xl transition-colors font-semibold text-[14px] text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]">
             <MessageCircle className="w-4 h-4" /> Comment
           </button>
-          <button onClick={() => {}} className="tap-target flex items-center gap-2 flex-1 justify-center rounded-xl transition-colors font-semibold text-[14px] text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]">
-            <Share2 className="w-4 h-4" /> Share
+          <button
+            onClick={handleShare}
+            className="tap-target flex items-center gap-2 flex-1 justify-center rounded-xl transition-colors font-semibold text-[14px] text-[#65676b] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]"
+          >
+            <Share2 className="w-4 h-4" /> {shareStatus}
           </button>
         </div>
 
