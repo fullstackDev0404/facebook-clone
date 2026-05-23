@@ -10,6 +10,7 @@ import { avatarSrc } from '@/component/feed/feedUtils'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter, usePathname } from 'next/navigation'
 import { notificationsApi } from '@/lib/api'
+import { connectSocket } from '@/lib/socket'
 import NotificationsPanel from './notifications/NotificationsPanel'
 
 const NAV_ITEMS = [
@@ -31,6 +32,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const [profileOpen, setProfileOpen]     = useState(false)
     const [notifOpen, setNotifOpen]         = useState(false)
     const [unreadCount, setUnreadCount]     = useState(0)
+    const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
 
     const profileRef = useRef<HTMLDivElement>(null)
     const notifRef   = useRef<HTMLDivElement>(null)
@@ -72,6 +74,64 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             .then(d => setUnreadCount(d.unreadCount))
             .catch(() => {})
     }, [])
+
+    // Fetch unread message notifications on mount
+    useEffect(() => {
+        notificationsApi.getAll({ page: 1, limit: 100, unreadOnly: true })
+            .then(d => {
+                const messages = d.notifications?.filter((n: any) => n.type === 'message') ?? []
+                setUnreadMessagesCount(messages.length)
+            })
+            .catch(() => {})
+    }, [])
+
+    // Subscribe to socket notification updates
+    useEffect(() => {
+        const socket = connectSocket()
+        if (!socket) return
+
+        const handleNotificationUpdate = (payload: any) => {
+            if (payload?.unreadCount !== undefined) {
+                setUnreadCount(payload.unreadCount)
+            }
+        }
+
+        const handleMessageNotification = (payload: any) => {
+            // increment unread badge (notifications bell) and briefly open the notifications panel as a subtle cue
+            setUnreadCount(c => c + 1)
+            setNotifOpen(true)
+            setTimeout(() => setNotifOpen(false), 2500)
+        }
+
+        const handleMessageNew = (payload: any) => {
+            // payload.message.sender/receiver are normalised in server
+            const msg = payload?.message
+            if (!msg) return
+            // Only increment if current user is the receiver and not already viewing messages
+            if (user && msg.receiver?.id === user.id && pathname !== '/messages') {
+                setUnreadMessagesCount(c => c + 1)
+            }
+        }
+
+        socket.on('notification:unread_count', handleNotificationUpdate)
+        socket.on('notification:new', handleNotificationUpdate)
+        socket.on('notification:message', handleMessageNotification)
+        socket.on('message:new', handleMessageNew)
+
+        return () => {
+            socket.off('notification:unread_count', handleNotificationUpdate)
+            socket.off('notification:new', handleNotificationUpdate)
+            socket.off('notification:message', handleMessageNotification)
+            socket.off('message:new', handleMessageNew)
+        }
+    }, [])
+
+    // Reset unread messages count when navigating to messages page
+    useEffect(() => {
+        if (pathname === '/messages') {
+            setUnreadMessagesCount(0)
+        }
+    }, [pathname])
 
     const handleLogout = () => { logout(); router.push('/login') }
     const fullName = user ? `${user.firstName} ${user.lastName}` : ''
@@ -159,6 +219,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                         title="Messenger"
                     >
                         <MessageCircle className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                        {unreadMessagesCount > 0 && (
+                            <span className="absolute -top-0.5 -right-0.5 min-w-4.5 h-4.5 bg-[#1877f2] text-white text-[10px] rounded-full flex items-center justify-center font-bold px-1 leading-none">
+                                {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                            </span>
+                        )}
                     </button>
 
                     {/* Notifications */}

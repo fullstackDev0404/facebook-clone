@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 import Header        from '@/component/Header'
 import LeftSidebar   from '@/component/LeftSidebar'
 import RightSidebar  from '@/component/RightSidebar'
+import LiveInsights  from '@/component/LiveInsights'
 import Feed          from '@/component/Feed'
 import ProtectedRoute from '@/component/ProtectedRoute'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
@@ -43,6 +44,7 @@ const Homepage = () => {
           </div>
 
           <main className="flex-1 min-w-0 py-5 px-4 sm:px-6 overflow-y-auto">
+            <LiveInsights />
             <Feed />
           </main>
 

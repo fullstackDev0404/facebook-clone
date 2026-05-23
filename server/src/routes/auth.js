@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { z } = require('zod')
 const prisma = require('../lib/prisma')
+const { recordSignup } = require('../lib/socket')
 
 const signToken = (userId) =>
     jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' })
@@ -36,6 +37,7 @@ router.post('/register', async (req, res, next) => {
         })
 
         const token = signToken(user.id)
+        recordSignup().catch(() => {})
         res.status(201).json({ token, user })
     } catch (err) {
         if (err instanceof z.ZodError) {

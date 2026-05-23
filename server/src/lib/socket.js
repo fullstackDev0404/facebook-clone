@@ -5,6 +5,56 @@ const prisma = require('../lib/prisma')
 const logger = require('../lib/logger')
 
 let io
+const onlineUsers = new Map()
+const signupHistory = []
+const HISTORY_BUCKET_MS = 5 * 60 * 1000
+const MAX_HISTORY_POINTS = 12
+
+const pruneSignupHistory = () => {
+  const threshold = Date.now() - MAX_HISTORY_POINTS * HISTORY_BUCKET_MS
+  while (signupHistory.length > 0 && signupHistory[0].timestamp < threshold) {
+    signupHistory.shift()
+  }
+}
+
+const getSignupSummary = () => {
+  pruneSignupHistory()
+  const history = signupHistory.slice(-MAX_HISTORY_POINTS)
+  const signupsLastHour = history.reduce((sum, bucket) => sum + bucket.count, 0)
+  return {
+    onlineUsers: onlineUsers.size,
+    signupsLastHour,
+    signupHistory: history.map(bucket => bucket.count),
+    signupBuckets: history,
+  }
+}
+
+const broadcastDashboardUpdate = async () => {
+  if (!io) return
+  const payload = getSignupSummary()
+  io.emit('dashboard:update', payload)
+}
+
+const recordSignup = async () => {
+  const now = Date.now()
+  const lastBucket = signupHistory[signupHistory.length - 1]
+
+  if (lastBucket && now - lastBucket.timestamp < HISTORY_BUCKET_MS) {
+    lastBucket.count += 1
+  } else {
+    signupHistory.push({ timestamp: now, count: 1 })
+  }
+
+  pruneSignupHistory()
+  await broadcastDashboardUpdate()
+}
+
+const emitNotificationCount = async (userId) => {
+  if (!io) return
+  const unreadCount = await prisma.notification.count({ where: { userId, read: false } })
+  io.to(userId).emit('notification:unread_count', { unreadCount })
+  io.to(userId).emit('notification:new', { unreadCount })
+}
 
 const initSocket = (server) => {
   io = new Server(server, {
@@ -36,9 +86,27 @@ const initSocket = (server) => {
 
   io.on('connection', (socket) => {
     socket.requestId = crypto.randomUUID()
+    const connectionCount = (onlineUsers.get(socket.user.id) ?? 0) + 1
+    onlineUsers.set(socket.user.id, connectionCount)
     socket.join(socket.user.id)
     socket.emit('socket:connected', { userId: socket.user.id })
+    socket.emit('online:init', { onlineUserIds: Array.from(onlineUsers.keys()) })
+    socket.emit('dashboard:update', getSignupSummary())
     logger.info({ event: 'socket:connected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId })
+
+    socket.broadcast.emit('user:online', { userId: socket.user.id })
+    broadcastDashboardUpdate().catch(err => logger.error({ event: 'dashboard:update:error', error: err.message }))
+
+    socket.on('disconnect', () => {
+      const currentCount = onlineUsers.get(socket.user.id) ?? 0
+      if (currentCount <= 1) {
+        onlineUsers.delete(socket.user.id)
+        socket.broadcast.emit('user:offline', { userId: socket.user.id })
+      } else {
+        onlineUsers.set(socket.user.id, currentCount - 1)
+      }
+      broadcastDashboardUpdate().catch(err => logger.error({ event: 'dashboard:update:error', error: err.message }))
+    })
 
     socket.on('send_message', async (payload, callback) => {
       logger.info({ event: 'socket:send_message', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, payload: { receiverId: payload?.receiverId } })
@@ -87,6 +155,8 @@ const initSocket = (server) => {
 
     socket.on('disconnect', () => {
       logger.info({ event: 'socket:disconnected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId })
+      onlineUsers.delete(socket.user.id)
+      broadcastDashboardUpdate().catch(err => logger.error({ event: 'dashboard:update:error', error: err.message }))
       socket.leave(socket.user.id)
     })
   })
@@ -99,4 +169,10 @@ const getIo = () => {
   return io
 }
 
-module.exports = { initSocket, getIo }
+module.exports = {
+  initSocket,
+  getIo,
+  broadcastDashboardUpdate,
+  recordSignup,
+  emitNotificationCount,
+}

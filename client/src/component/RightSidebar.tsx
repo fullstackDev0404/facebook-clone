@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Search, MoreHorizontal, Video, Loader2, UserPlus, X } from 'lucide-react'
 import { friendsApi } from '@/lib/api'
+import { connectSocket } from '@/lib/socket'
 import type { Author } from '@/types'
 
 // ─── Contacts section (real friends from API) ─────────────────────────────────
@@ -10,12 +11,44 @@ const ContactsList = () => {
     const [friends, setFriends] = useState<{ friendshipId: string; friend: Author }[]>([])
     const [loading, setLoading] = useState(true)
     const [search, setSearch]   = useState('')
+    const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         friendsApi.getFriends()
             .then(d => setFriends(d.friends))
             .catch(() => {})
             .finally(() => setLoading(false))
+    }, [])
+
+    useEffect(() => {
+        const socket = connectSocket()
+        if (!socket) return
+
+        const handleOnlineInit = (payload: { onlineUserIds: string[] }) => {
+            setOnlineFriendIds(new Set(payload.onlineUserIds))
+        }
+
+        const handleUserOnline = ({ userId }: { userId: string }) => {
+            setOnlineFriendIds(prev => new Set(prev).add(userId))
+        }
+
+        const handleUserOffline = ({ userId }: { userId: string }) => {
+            setOnlineFriendIds(prev => {
+                const next = new Set(prev)
+                next.delete(userId)
+                return next
+            })
+        }
+
+        socket.on('online:init', handleOnlineInit)
+        socket.on('user:online', handleUserOnline)
+        socket.on('user:offline', handleUserOffline)
+
+        return () => {
+            socket.off('online:init', handleOnlineInit)
+            socket.off('user:online', handleUserOnline)
+            socket.off('user:offline', handleUserOffline)
+        }
     }, [])
 
     const filtered = friends.filter(({ friend }) =>
@@ -68,16 +101,20 @@ const ContactsList = () => {
                         key={friendshipId}
                         className="flex items-center gap-3 w-full px-2 py-2 rounded-xl hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-left group"
                     >
-                        <div className="relative shrink-0">
-                            <Avatar className="w-9 h-9">
-                                <AvatarImage src={friend.avatar ?? undefined} />
-                                <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
-                                    {initials(friend)}
-                                </AvatarFallback>
-                            </Avatar>
-                            {/* online dot placeholder */}
-                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#31a24c] border-2 border-white dark:border-[#242526] rounded-full" />
-                        </div>
+<div className="relative shrink-0">
+                             <Avatar className="w-9 h-9">
+                                 <AvatarImage src={friend.avatar ?? undefined} />
+                                 <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
+                                     {initials(friend)}
+                                 </AvatarFallback>
+                             </Avatar>
+                             {onlineFriendIds.has(friend.id) && (
+                                 <span
+                                     className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#31a24c] border-2 border-white dark:border-[#242526] rounded-full shadow-sm ring-1 ring-white"
+                                     aria-label="Online"
+                                 />
+                             )}
+                         </div>
                         <span className="text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb] truncate group-hover:text-[#1877f2] transition-colors">
                             {friend.firstName} {friend.lastName}
                         </span>

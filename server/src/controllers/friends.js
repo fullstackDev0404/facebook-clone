@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma')
+const { emitNotificationCount } = require('../lib/socket')
 
 // Shared author select shape
 const USER_SELECT = {
@@ -60,6 +61,7 @@ const sendRequest = async (req, res, next) => {
       },
     })
 
+    await emitNotificationCount(receiverId).catch(() => {})
     res.status(201).json({ friendship })
   } catch (err) {
     next(err)
@@ -105,6 +107,8 @@ const respondToRequest = async (req, res, next) => {
           entityId: friendship.id,
         },
       })
+
+      await emitNotificationCount(friendship.senderId).catch(() => {})
     }
 
     res.json({ friendship: updated })

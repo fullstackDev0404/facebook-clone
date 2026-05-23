@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from 'react'
+import { connectSocket } from '@/lib/socket'
 import { Loader2, UserPlus, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { friendsApi } from '@/lib/api'
@@ -15,12 +16,42 @@ const PeopleYouMayKnow = () => {
   const [people, setPeople]   = useState<Author[]>([])
   const [loading, setLoading] = useState(true)
   const [states, setStates]   = useState<Record<string, ReqState>>({})
+  const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     friendsApi.getSuggestions()
       .then(d => setPeople(d.suggestions.slice(0, 5)))
       .catch(() => {})
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    const socket = connectSocket()
+    if (!socket) return
+
+    const handleOnlineInit = (payload: { onlineUserIds: string[] }) => {
+      setOnlineFriendIds(new Set(payload.onlineUserIds))
+    }
+    const handleUserOnline = ({ userId }: { userId: string }) => {
+      setOnlineFriendIds(prev => new Set(prev).add(userId))
+    }
+    const handleUserOffline = ({ userId }: { userId: string }) => {
+      setOnlineFriendIds(prev => {
+        const next = new Set(prev)
+        next.delete(userId)
+        return next
+      })
+    }
+
+    socket.on('online:init', handleOnlineInit)
+    socket.on('user:online', handleUserOnline)
+    socket.on('user:offline', handleUserOffline)
+
+    return () => {
+      socket.off('online:init', handleOnlineInit)
+      socket.off('user:online', handleUserOnline)
+      socket.off('user:offline', handleUserOffline)
+    }
   }, [])
 
   const dismiss = (id: string) => setPeople(p => p.filter(u => u.id !== id))
@@ -54,12 +85,17 @@ const PeopleYouMayKnow = () => {
           const state = states[user.id] ?? 'idle'
           return (
             <div key={user.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors">
-              <Avatar className="w-10 h-10 shrink-0">
-                <AvatarImage src={user.avatar ?? undefined} className="" />
-                <AvatarFallback className="bg-[#1877f2] text-white font-semibold text-sm">
-                  {initials(user)}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative shrink-0">
+                <Avatar className="w-10 h-10 shrink-0">
+                  <AvatarImage src={user.avatar ?? undefined} className="" />
+                  <AvatarFallback className="bg-[#1877f2] text-white font-semibold text-sm">
+                    {initials(user)}
+                  </AvatarFallback>
+                </Avatar>
+                {onlineFriendIds.has(user.id) && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#31a24c] border-2 border-white dark:border-[#242526] rounded-full shadow-sm ring-1 ring-white" />
+                )}
+              </div>
 
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-[14px] text-[#050505] dark:text-[#e4e6eb] truncate">

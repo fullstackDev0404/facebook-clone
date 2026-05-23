@@ -1,5 +1,6 @@
 const prisma = require('../lib/prisma')
 const { VALID_REACTIONS } = require('../lib/constants')
+const { emitNotificationCount } = require('../lib/socket')
 
 // Shared Prisma include shape for post queries
 const POST_INCLUDE = {
@@ -151,6 +152,10 @@ const createPost = async (req, res, next) => {
 
             return p
         })
+
+        if (taggedIds.length) {
+            await Promise.all(taggedIds.map(uid => emitNotificationCount(uid).catch(() => {})))
+        }
 
         res.status(201).json({ post })
     } catch (err) {

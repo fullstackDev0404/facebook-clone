@@ -1,4 +1,5 @@
 const prisma = require('../lib/prisma')
+const { emitNotificationCount } = require('../lib/socket')
 
 const NOTIFICATION_INCLUDE = {
   // actor is the user who triggered the notification (optional)
@@ -64,6 +65,7 @@ const markRead = async (req, res, next) => {
       data:  { read: true },
     })
 
+    await emitNotificationCount(userId).catch(() => {})
     res.json({ notification: updated })
   } catch (err) {
     next(err)
@@ -81,6 +83,7 @@ const markAllRead = async (req, res, next) => {
       data:  { read: true },
     })
 
+    await emitNotificationCount(req.user.id).catch(() => {})
     res.json({ message: `${count} notification(s) marked as read`, count })
   } catch (err) {
     next(err)
@@ -101,6 +104,7 @@ const deleteNotification = async (req, res, next) => {
     if (notification.userId !== userId) return res.status(403).json({ error: 'Not authorized' })
 
     await prisma.notification.delete({ where: { id } })
+    await emitNotificationCount(userId).catch(() => {})
     res.json({ message: 'Notification deleted' })
   } catch (err) {
     next(err)

@@ -1,5 +1,5 @@
 const prisma = require('../lib/prisma')
-const { getIo } = require('../lib/socket')
+const { getIo, emitNotificationCount } = require('../lib/socket')
 const uploadAvatar = require('../lib/uploadAvatar') // provides `toUrlPath`
 
 /**
@@ -121,8 +121,31 @@ const sendMessage = async (req, res, next) => {
 
     try {
       const io = getIo()
+      // Emit the raw message event to sender and receiver so chat UIs can update
       io.to(receiverId).emit('message:new', { message: normalised })
       io.to(senderId).emit('message:new', { message: normalised })
+
+      // Create a notification entry for the receiver and emit notification updates
+      try {
+        const notif = await prisma.notification.create({
+          data: {
+            type: 'message',
+            message: `${normalised.sender.name} sent you a message`,
+            userId: receiverId,
+            actorId: senderId,
+            entityId: normalised.id,
+          },
+        })
+
+        // Emit a specific message notification payload for UI to show a preview/toast
+        io.to(receiverId).emit('notification:message', { notification: notif, message: normalised })
+
+        // Update unread counts for the receiver
+        await emitNotificationCount(receiverId)
+      } catch (innerErr) {
+        // don't block the main flow if notification creation fails
+        console.error('notification:create:error', innerErr?.message || innerErr)
+      }
     } catch (err) {
       // Socket.io may not be initialized in some test or startup contexts.
     }
