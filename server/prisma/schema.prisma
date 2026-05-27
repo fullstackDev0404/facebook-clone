@@ -34,6 +34,7 @@ model User {
   notifications    Notification[]
   stories          Story[]
   taggedIn         PostTag[]
+  activityLogs     ActivityLog[]
 
   @@index([email])
   @@index([username])
@@ -156,4 +157,21 @@ model Story {
 
   @@index([authorId, createdAt])
   @@map("stories")
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // login, post_create, post_like, comment_create, friend_request, etc.
+  entityType String? // post, comment, user, etc.
+  entityId  String?  // ID of the related entity
+  metadata  Json?    // Additional data (IP, user agent, etc.)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+  @@map("activity_logs")
 }

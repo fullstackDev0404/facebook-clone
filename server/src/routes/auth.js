@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const { z } = require('zod')
 const prisma = require('../lib/prisma')
 const { recordSignup } = require('../lib/socket')
+const { logActivity, ACTIVITY_TYPES } = require('../lib/activityLogger')
 
 const signToken = (userId) =>
     jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' })
@@ -45,6 +46,13 @@ router.post('/register', async (req, res, next) => {
 
         const token = signToken(user.id)
         recordSignup().catch(() => {})
+        
+        // Log registration activity
+        logActivity(user.id, ACTIVITY_TYPES.REGISTER, 'user', user.id, {
+            ip: req.ip,
+            userAgent: req.get('user-agent'),
+        }).catch(() => {})
+        
         res.status(201).json({ token, user })
     } catch (err) {
         if (err instanceof z.ZodError) {
@@ -72,6 +80,12 @@ router.post('/login', async (req, res, next) => {
 
         const token = signToken(user.id)
         const { password: _, ...safeUser } = user
+
+        // Log login activity
+        logActivity(user.id, ACTIVITY_TYPES.LOGIN, 'user', user.id, {
+            ip: req.ip,
+            userAgent: req.get('user-agent'),
+        }).catch(() => {})
 
         res.json({ token, user: safeUser })
     } catch (err) {

@@ -1,6 +1,7 @@
 const prisma = require('../lib/prisma')
 const { VALID_REACTIONS } = require('../lib/constants')
 const { emitNotificationCount } = require('../lib/socket')
+const { logActivity, ACTIVITY_TYPES } = require('../lib/activityLogger')
 
 // Shared Prisma include shape for post queries
 const POST_INCLUDE = {
@@ -157,6 +158,13 @@ const createPost = async (req, res, next) => {
             await Promise.all(taggedIds.map(uid => emitNotificationCount(uid).catch(() => {})))
         }
 
+        // Log post creation activity
+        logActivity(req.user.id, ACTIVITY_TYPES.POST_CREATE, 'post', post.id, {
+            hasImage: !!photoPath,
+            hasVideo: !!videoPath,
+            taggedUsers: taggedIds.length,
+        }).catch(() => {})
+
         res.status(201).json({ post })
     } catch (err) {
         next(err)
@@ -192,6 +200,11 @@ const likePost = async (req, res, next) => {
             create: { userId, postId, type },
         })
 
+        // Log post like activity
+        logActivity(userId, ACTIVITY_TYPES.POST_LIKE, 'post', postId, {
+            reactionType: type,
+        }).catch(() => {})
+
         res.json({ like })
     } catch (err) {
         next(err)
@@ -218,6 +231,9 @@ const unlikePost = async (req, res, next) => {
         await prisma.like.delete({
             where: { userId_postId: { userId, postId } },
         })
+
+        // Log post unlike activity
+        logActivity(userId, ACTIVITY_TYPES.POST_UNLIKE, 'post', postId).catch(() => {})
 
         res.json({ message: 'Like removed' })
     } catch (err) {
@@ -303,6 +319,12 @@ const createComment = async (req, res, next) => {
                 },
             },
         })
+
+        // Log comment creation activity
+        logActivity(userId, ACTIVITY_TYPES.COMMENT_CREATE, 'comment', comment.id, {
+            postId,
+            isReply: !!parentId,
+        }).catch(() => {})
 
         res.status(201).json({ comment })
     } catch (err) {
