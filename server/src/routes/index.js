@@ -7,5 +7,6 @@ router.use('/notifications', require('./notifications'))
 router.use('/users',         require('./users'))
 router.use('/messages',      require('./messages'))
 router.use('/stories',       require('./stories'))
+router.use('/search',         require('./search'))
 
 module.exports = router

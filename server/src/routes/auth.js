@@ -12,6 +12,7 @@ const signToken = (userId) =>
 const registerSchema = z.object({
     firstName: z.string().min(1, 'First name is required'),
     lastName:  z.string().min(1, 'Last name is required'),
+    username:  z.string().min(3, 'Username must be at least 3 characters').max(20, 'Username must be less than 20 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores').optional(),
     email:     z.string().email('Invalid email'),
     password:  z.string().min(6, 'Password must be at least 6 characters'),
     dob:       z.string().optional(),
@@ -25,6 +26,12 @@ router.post('/register', async (req, res, next) => {
         const existing = await prisma.user.findUnique({ where: { email: data.email } })
         if (existing) return res.status(409).json({ error: 'Email already in use' })
 
+        // Check if username is already taken
+        if (data.username) {
+            const existingUsername = await prisma.user.findUnique({ where: { username: data.username } })
+            if (existingUsername) return res.status(409).json({ error: 'Username already taken' })
+        }
+
         const hashed = await bcrypt.hash(data.password, 10)
 
         const user = await prisma.user.create({
@@ -33,7 +40,7 @@ router.post('/register', async (req, res, next) => {
                 password: hashed,
                 dob: data.dob ? new Date(data.dob) : null,
             },
-            select: { id: true, email: true, firstName: true, lastName: true, avatar: true }
+            select: { id: true, email: true, firstName: true, lastName: true, username: true, avatar: true, bio: true, dob: true, gender: true }
         })
 
         const token = signToken(user.id)

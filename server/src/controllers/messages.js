@@ -144,7 +144,7 @@ const sendMessage = async (req, res, next) => {
         await emitNotificationCount(receiverId)
       } catch (innerErr) {
         // don't block the main flow if notification creation fails
-        console.error('notification:create:error', innerErr?.message || innerErr)
+        // Log error silently without console output
       }
     } catch (err) {
       // Socket.io may not be initialized in some test or startup contexts.
