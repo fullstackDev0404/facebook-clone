@@ -16,9 +16,9 @@ const searchUsers = async (req, res, next) => {
         const users = await prisma.user.findMany({
             where: {
                 OR: [
-                    { firstName: { contains: query } },
-                    { lastName: { contains: query } },
-                    { email: { contains: query } },
+                    { firstName: { contains: query, mode: 'insensitive' } },
+                    { lastName: { contains: query, mode: 'insensitive' } },
+                    { email: { contains: query, mode: 'insensitive' } },
                 ],
             },
             select: {
@@ -53,7 +53,7 @@ const searchPosts = async (req, res, next) => {
 
         const posts = await prisma.post.findMany({
             where: {
-                content: { contains: query },
+                content: { contains: query, mode: 'insensitive' },
             },
             include: {
                 author: {
@@ -117,8 +117,8 @@ const globalSearch = async (req, res, next) => {
             results.users = await prisma.user.findMany({
                 where: {
                     OR: [
-                        { firstName: { contains: query } },
-                        { lastName: { contains: query } },
+                        { firstName: { contains: query, mode: 'insensitive' } },
+                        { lastName: { contains: query, mode: 'insensitive' } },
                     ],
                 },
                 select: {
@@ -135,7 +135,7 @@ const globalSearch = async (req, res, next) => {
         if (type === 'all' || type === 'posts') {
             const posts = await prisma.post.findMany({
                 where: {
-                    content: { contains: query },
+                    content: { contains: query, mode: 'insensitive' },
                 },
                 include: {
                     author: {
