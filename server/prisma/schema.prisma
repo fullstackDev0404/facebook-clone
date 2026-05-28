@@ -35,6 +35,9 @@ model User {
   stories          Story[]
   taggedIn         PostTag[]
   activityLogs     ActivityLog[]
+  reportedItems    Report[]     @relation("ReportReporter")
+  reviewedReports  Report[]     @relation("ReportReviewer")
+  moderationActions ModerationAction[]
 
   @@index([email])
   @@index([username])
@@ -174,4 +177,43 @@ model ActivityLog {
   @@index([action, createdAt])
   @@index([entityType, entityId])
   @@map("activity_logs")
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  entityType  String   // post, comment, user
+  entityId    String
+  reason      String   // spam, harassment, inappropriate_content, other
+  description String?
+  reporterId  String
+  status      String   @default("pending") // pending, reviewed, resolved, dismissed
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reporter  User @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reviewer  User? @relation("ReportReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([status])
+  @@index([reporterId])
+  @@map("reports")
+}
+
+model ModerationAction {
+  id          String   @id @default(cuid())
+  entityType  String   // post, comment, user
+  entityId    String
+  action      String   // delete, hide, warn, ban, etc.
+  reason      String?
+  moderatorId String
+  createdAt   DateTime @default(now())
+
+  moderator User @relation(fields: [moderatorId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([moderatorId])
+  @@map("moderation_actions")
 }

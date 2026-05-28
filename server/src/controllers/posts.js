@@ -2,6 +2,7 @@ const prisma = require('../lib/prisma')
 const { VALID_REACTIONS } = require('../lib/constants')
 const { emitNotificationCount } = require('../lib/socket')
 const { logActivity, ACTIVITY_TYPES } = require('../lib/activityLogger')
+const { moderateContent } = require('../lib/contentModeration')
 
 // Shared Prisma include shape for post queries
 const POST_INCLUDE = {
@@ -121,6 +122,23 @@ const createPost = async (req, res, next) => {
         const finalContent = feeling
             ? `${content ?? ''}${content ? ' — ' : ''}feeling ${feeling}`
             : content
+
+        // Content moderation check
+        const moderationResult = moderateContent(finalContent, {
+            autoCensor: false,
+            autoFlag: true,
+            blockProfanity: false
+        })
+
+        // Log if content was flagged
+        if (moderationResult.shouldFlag) {
+            logActivity(req.user.id, ACTIVITY_TYPES.CONTENT_FLAGGED, 'post', null, {
+                profanityDetected: moderationResult.profanityDetected,
+                spamDetected: moderationResult.spamDetected,
+                profanityWords: moderationResult.profanityWords,
+                spamReasons: moderationResult.spamReasons
+            }).catch(() => {})
+        }
 
         // Create post and notifications in a transaction so we don't end up
         // with orphaned notifications or partial state on errors.
@@ -292,6 +310,23 @@ const createComment = async (req, res, next) => {
 
         if (!content) {
             return res.status(400).json({ error: 'Comment content is required' })
+        }
+
+        // Content moderation check
+        const moderationResult = moderateContent(content, {
+            autoCensor: false,
+            autoFlag: true,
+            blockProfanity: false
+        })
+
+        // Log if content was flagged
+        if (moderationResult.shouldFlag) {
+            logActivity(userId, ACTIVITY_TYPES.CONTENT_FLAGGED, 'comment', null, {
+                profanityDetected: moderationResult.profanityDetected,
+                spamDetected: moderationResult.spamDetected,
+                profanityWords: moderationResult.profanityWords,
+                spamReasons: moderationResult.spamReasons
+            }).catch(() => {})
         }
 
         // Check post exists

@@ -49,6 +49,9 @@ const ACTIVITY_TYPES = {
   MESSAGE_SEND: 'message_send',
   PROFILE_UPDATE: 'profile_update',
   PROFILE_VIEW: 'profile_view',
+  REPORT_CREATE: 'report_create',
+  MODERATION_ACTION: 'moderation_action',
+  CONTENT_FLAGGED: 'content_flagged',
 }
 
 module.exports = { logActivity, ACTIVITY_TYPES }

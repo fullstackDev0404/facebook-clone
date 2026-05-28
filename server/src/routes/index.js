@@ -9,5 +9,6 @@ router.use('/messages',      require('./messages'))
 router.use('/stories',       require('./stories'))
 router.use('/search',         require('./search'))
 router.use('/analytics',     require('./analytics'))
+router.use('/moderation',    require('./moderation'))
 
 module.exports = router
