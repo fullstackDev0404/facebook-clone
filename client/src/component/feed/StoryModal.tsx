@@ -105,8 +105,7 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange }: Props) => {
     <Dialog open={open} onOpenChange={close}>
       <DialogContent
         showCloseButton={false}
-        className="p-0 border-0 bg-transparent shadow-none max-w-none w-screen h-screen rounded-none flex items-center justify-center"
-        style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}
+        className="p-0 border-0 bg-black/90 shadow-none max-w-none w-screen h-screen rounded-none flex items-center justify-center"
       >
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">{authorName}&apos;s story</DialogTitle>

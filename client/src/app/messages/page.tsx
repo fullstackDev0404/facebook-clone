@@ -24,7 +24,6 @@ const MessagesPage = () => {
   const [sending, setSending] = useState(false)
   const [messageText, setMessageText] = useState('')
   const [socketConnected, setSocketConnected] = useState(false)
-  const [onlineFriendIds, setOnlineFriendIds] = useState<Set<string>>(new Set())
   const [error, setError] = useState('')
   const [chatError, setChatError] = useState('')
   const chatEndRef = useRef<HTMLDivElement | null>(null)
@@ -101,22 +100,10 @@ const MessagesPage = () => {
     socket.on('disconnect', handleDisconnect)
     socket.on('message:new', handleMessage)
 
-    // presence events (also used elsewhere)
-    const handleOnlineInit = (payload: { onlineUserIds: string[] }) => setOnlineFriendIds(new Set(payload.onlineUserIds))
-    const handleUserOnline = ({ userId }: { userId: string }) => setOnlineFriendIds(prev => new Set(prev).add(userId))
-    const handleUserOffline = ({ userId }: { userId: string }) => setOnlineFriendIds(prev => { const next = new Set(prev); next.delete(userId); return next })
-
-    socket.on('online:init', handleOnlineInit)
-    socket.on('user:online', handleUserOnline)
-    socket.on('user:offline', handleUserOffline)
-
     return () => {
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
       socket.off('message:new', handleMessage)
-      socket.off('online:init', handleOnlineInit)
-      socket.off('user:online', handleUserOnline)
-      socket.off('user:offline', handleUserOffline)
       disconnectSocket()
     }
   }, [user])
@@ -196,18 +183,13 @@ const MessagesPage = () => {
                                 onClick={() => setSelectedContactId(contact.friend.id)}
                                 className={`flex items-center gap-3 w-full text-left rounded-3xl px-3 py-3 transition-colors ${active ? 'bg-[#e7f3ff] text-[#050505]' : 'hover:bg-[#f0f2f5] dark:hover:bg-[#242526]'}`}
                               >
-                                <div className="relative w-11 h-11 shrink-0">
-                                  <div className="w-11 h-11 rounded-full overflow-hidden bg-[#e4e6eb]">
-                                    {contact.friend.avatar ? (
-                                      <img src={avatarSrc(contact.friend.avatar)} alt="Avatar" className="object-cover w-full h-full" />
-                                    ) : (
-                                      <div className="flex items-center justify-center w-full h-full bg-[#1877f2] text-white font-semibold">
-                                        {contact.friend.firstName[0]}{contact.friend.lastName[0]}
-                                      </div>
-                                    )}
-                                  </div>
-                                  {onlineFriendIds.has(contact.friend.id) && (
-                                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#31a24c] border-2 border-white dark:border-[#242526] rounded-full shadow-sm ring-1 ring-white" />
+                                <div className="w-11 h-11 rounded-full overflow-hidden bg-[#e4e6eb] shrink-0">
+                                  {contact.friend.avatar ? (
+                                    <img src={avatarSrc(contact.friend.avatar)} alt="Avatar" className="object-cover w-full h-full" />
+                                  ) : (
+                                    <div className="flex items-center justify-center w-full h-full bg-[#1877f2] text-white font-semibold">
+                                      {contact.friend.firstName[0]}{contact.friend.lastName[0]}
+                                    </div>
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -222,7 +204,7 @@ const MessagesPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1 flex flex-col min-h-120">
+                  <div className="flex-1 flex flex-col min-h-[480px]">
                     <div className="px-5 py-5 border-b border-[#f0f2f5] dark:border-[#3e4042] flex items-center justify-between">
                       <div>
                         <p className="text-[18px] font-semibold text-[#050505]">{selectedContact ? `${selectedContact.friend.firstName} ${selectedContact.friend.lastName}` : 'No chat selected'}</p>

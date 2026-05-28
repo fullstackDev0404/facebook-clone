@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import {
     Search, Home, Users, Tv, Store, Bell, MessageCircle,
-    Menu, LogOut, Settings, User, X,
+    Menu, LogOut, Settings, User, X, BarChart3,
 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { avatarSrc } from '@/component/feed/feedUtils'
@@ -12,6 +12,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { notificationsApi } from '@/lib/api'
 import { connectSocket } from '@/lib/socket'
 import NotificationsPanel from './notifications/NotificationsPanel'
+import SearchResults from './SearchResults'
 
 const NAV_ITEMS = [
     { icon: Home,  label: 'Home',        href: '/'        },
@@ -176,6 +177,15 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                 </button>
                             )}
                         </div>
+                        {searchFocused && (
+                            <SearchResults 
+                                query={searchQuery} 
+                                onClose={() => {
+                                    setSearchQuery('')
+                                    setSearchFocused(false)
+                                }} 
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -291,7 +301,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
                                 <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
 
-                                <button 
+                                <button
                                     onClick={() => {
                                         router.push('/profile/edit')
                                         setProfileOpen(false)
@@ -306,7 +316,22 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                     </div>
                                 </button>
 
-                                <button 
+                                <button
+                                    onClick={() => {
+                                        router.push('/analytics')
+                                        setProfileOpen(false)
+                                    }}
+                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
+                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
+                                        <BarChart3 className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]">Analytics</p>
+                                        <p className="text-[12px] text-[#65676b]">View your activity stats</p>
+                                    </div>
+                                </button>
+
+                                <button
                                     className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
                                     <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
                                         <User className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />

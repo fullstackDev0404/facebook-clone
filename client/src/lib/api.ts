@@ -273,3 +273,94 @@ export const notificationsApi = {
   delete: (id: string) =>
     request<{ message: string }>(`/notifications/${id}`, { method: 'DELETE' }),
 }
+
+// ─── Search ─────────────────────────────────────────────────────────────────────
+
+export const searchApi = {
+  users: (query: string, limit = 10) =>
+    request<{ users: import('@/types').Author[] }>(`/search/users?q=${encodeURIComponent(query)}&limit=${limit}`),
+
+  posts: (query: string, limit = 10) =>
+    request<{ posts: import('@/types').PostRecord[] }>(`/search/posts?q=${encodeURIComponent(query)}&limit=${limit}`),
+
+  global: (query: string, type = 'all', limit = 5) =>
+    request<{ users?: import('@/types').Author[]; posts?: import('@/types').PostRecord[] }>(
+      `/search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}`
+    ),
+}
+
+// ─── Analytics ───────────────────────────────────────────────────────────────────
+
+export const analyticsApi = {
+  overview: () =>
+    request<{ overview: { postsCount: number; commentsCount: number; likesGiven: number; friendsCount: number }; recentActivity: Record<string, number> }>('/analytics/overview'),
+
+  activityTimeline: (days = 30) =>
+    request<{ timeline: Record<string, any[]>; totalActivities: number }>(`/analytics/activity?days=${days}`),
+
+  posts: () =>
+    request<{ totalPosts: number; totalLikes: number; totalComments: number; avgLikesPerPost: number; avgCommentsPerPost: number; mostLikedPost: any }>('/analytics/posts'),
+
+  engagement: (days = 30) =>
+    request<{ period: string; received: { likes: number; comments: number }; given: { likes: number; comments: number } }>(`/analytics/engagement?days=${days}`),
+}
+
+// ─── Moderation ─────────────────────────────────────────────────────────────────
+
+export interface Report {
+  id: string
+  entityType: string
+  entityId: string
+  reason: string
+  description: string | null
+  status: string
+  createdAt: string
+  reporter: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar: string | null
+  }
+  reviewer: {
+    id: string
+    firstName: string
+    lastName: string
+  } | null
+}
+
+export const moderationApi = {
+  createReport: (data: { entityType: string; entityId: string; reason: string; description?: string }) =>
+    request<{ report: Report }>('/moderation/reports', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getReports: ({ status, page = 1, limit = 20 }: { status?: string; page?: number; limit?: number } = {}) =>
+    request<{ reports: Report[]; pagination: { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean } }>(
+      `/moderation/reports${status ? `?status=${status}` : '?status=all'}&page=${page}&limit=${limit}`
+    ),
+
+  getReport: (id: string) =>
+    request<{ report: Report; entityDetails: any }>(`/moderation/reports/${id}`),
+
+  updateReport: (id: string, data: { status: string; resolution?: string }) =>
+    request<{ report: Report }>(`/moderation/reports/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+  createAction: (data: { entityType: string; entityId: string; action: string; reason?: string }) =>
+    request<{ moderationAction: any; result: any }>('/moderation/moderation/actions', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getStats: () =>
+    request<{ stats: { totalReports: number; pendingReports: number; resolvedReports: number; dismissedReports: number }; reportsByReason: { reason: string; count: number }[]; recentActions: any[] }>('/moderation/moderation/stats'),
+
+  analyzeText: (text: string) =>
+    request<{ safe: boolean; profanityDetected: boolean; spamDetected: boolean; profanityWords: string[]; spamReasons: string[]; censoredText: string; shouldFlag: boolean }>('/moderation/moderation/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    }),
+}

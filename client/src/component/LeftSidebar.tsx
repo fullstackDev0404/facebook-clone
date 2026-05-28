@@ -1,10 +1,11 @@
 "use client"
-import React, { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
     Home, Users, Clock, Bookmark, Flag, ChevronDown,
     Store, Tv, MessageCircle, Gamepad2, CalendarDays, X,
+    BarChart3, Shield,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { avatarSrc } from '@/component/feed/feedUtils'
@@ -14,6 +15,8 @@ const navItems = [
     { icon: Home,         label: 'Home',        color: '#1877f2', bg: '#e7f3ff', href: '/'           },
     { icon: Users,        label: 'Friends',     color: '#1877f2', bg: '#e7f3ff', href: '/friends'    },
     { icon: MessageCircle,label: 'Messenger',   color: '#1877f2', bg: '#e7f3ff', href: '/messages'   },
+    { icon: BarChart3,    label: 'Analytics',   color: '#1877f2', bg: '#e7f3ff', href: '/analytics'   },
+    { icon: Shield,       label: 'Moderation',  color: '#dc2626', bg: '#fee2e2', href: '/moderation' },
     { icon: Clock,        label: 'Memories',    color: '#e15241', bg: '#fce8e6', href: null          },
     { icon: Bookmark,     label: 'Saved',       color: '#7c3aed', bg: '#ede9fe', href: null          },
     { icon: Flag,         label: 'Pages',       color: '#f59e0b', bg: '#fef3c7', href: null          },
@@ -31,9 +34,20 @@ interface Props {
 const LeftSidebar = ({ onClose, showCloseButton }: Props) => {
     const { user } = useAuth()
     const router   = useRouter()
+    const pathname = usePathname()
     const fullName = user ? `${user.firstName} ${user.lastName}` : ''
     const initials = user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : 'U'
     const [activeItem, setActiveItem] = useState('Home')
+
+    // Sync active item with current route
+    useEffect(() => {
+        const activeNav = navItems.find(item => item.href === pathname)
+        if (activeNav) {
+            setActiveItem(activeNav.label)
+        } else if (pathname === '/') {
+            setActiveItem('Home')
+        }
+    }, [pathname])
 
     return (
         <aside

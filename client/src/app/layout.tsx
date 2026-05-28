@@ -12,11 +12,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className="h-full antialiased">
       <head>
         <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
-      <body
-        className="min-h-full flex flex-col"
-        style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" }}
-      >
+      <body className="min-h-full flex flex-col font-sans">
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
