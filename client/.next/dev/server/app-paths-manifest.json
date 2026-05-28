@@ -1,4 +1,7 @@
 {
+  "/analytics/page": "app/analytics/page.js",
   "/blocked/page": "app/blocked/page.js",
+  "/friends/page": "app/friends/page.js",
+  "/messages/page": "app/messages/page.js",
   "/page": "app/page.js"
 }

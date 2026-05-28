@@ -51,12 +51,12 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange }: Props) => {
 
   const goNext = useCallback(() => {
     clearTimers()
-    setCurrentIndex(prev => {
-      if (prev < stories.length - 1) return prev + 1
+    if (currentIndex < stories.length - 1) {
+      setCurrentIndex(prev => prev + 1)
+    } else {
       onOpenChange(false)
-      return prev
-    })
-  }, [stories.length, onOpenChange])
+    }
+  }, [stories.length, onOpenChange, currentIndex])
 
   const goPrev = useCallback(() => {
     clearTimers()

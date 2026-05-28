@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const reportsController = require('../controllers/reports')
 const moderationController = require('../controllers/moderation')
 const auth = require('../middleware/auth')
 
@@ -10,25 +11,25 @@ router.use(auth)
  * POST /api/reports
  * Create a content report
  */
-router.post('/reports', moderationController.createReport)
+router.post('/reports', reportsController.createReport)
 
 /**
  * GET /api/reports
  * Get all reports (admin only - add admin middleware later)
  */
-router.get('/reports', moderationController.getReports)
+router.get('/reports', reportsController.getReports)
 
 /**
  * GET /api/reports/:id
  * Get a specific report
  */
-router.get('/reports/:id', moderationController.getReport)
+router.get('/reports/:id', reportsController.getReport)
 
 /**
  * PATCH /api/reports/:id
  * Update report status (admin only)
  */
-router.patch('/reports/:id', moderationController.updateReport)
+router.patch('/reports/:id', reportsController.updateReport)
 
 /**
  * POST /api/moderation/actions
