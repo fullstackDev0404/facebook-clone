@@ -50,6 +50,7 @@ model Post {
   image     String?
   video     String?
   authorId  String
+  privacy   String   @default("public") // public, friends, private
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

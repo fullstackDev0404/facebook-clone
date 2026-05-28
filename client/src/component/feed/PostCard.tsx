@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { MessageCircle, MoreHorizontal, Pencil, Share2, ThumbsUp, Trash2, X, Loader2 } from 'lucide-react'
+import { MessageCircle, MoreHorizontal, Pencil, Share2, ThumbsUp, Trash2, X, Loader2, Globe, Users, Lock } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -46,6 +46,14 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const isOwner = user?.id === post.author.id
   const name    = `${post.author.firstName} ${post.author.lastName}`
   const fb      = initials(post.author.firstName, post.author.lastName)
+  const privacy = (post as any).privacy || 'public'
+
+  const privacyConfig = {
+    public: { icon: Globe, label: 'Public' },
+    friends: { icon: Users, label: 'Friends' },
+    private: { icon: Lock, label: 'Private' },
+  }
+  const currentPrivacy = privacyConfig[privacy as keyof typeof privacyConfig] || privacyConfig.public
 
   const menuItemBase = 'flex items-center gap-3 w-full px-4 py-2.5 rounded-xl transition-colors text-[14px] font-medium'
   const menuItemHover = 'hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
@@ -242,7 +250,7 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
             <div>
               <p className="font-semibold text-[14px] text-[#050505] dark:text-[#e4e6eb]">{name}</p>
               <p className="text-[12px] text-[#65676b] flex items-center gap-1">
-                {timeAgo(post.createdAt)} · <span>Public</span>
+                {timeAgo(post.createdAt)} · <span className="flex items-center gap-1"><currentPrivacy.icon className="w-3 h-3" /> {currentPrivacy.label}</span>
               </p>
             </div>
           </div>

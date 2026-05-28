@@ -45,19 +45,35 @@ const getFeed = async (req, res, next) => {
             f.senderId === userId ? f.receiverId : f.senderId
         )
 
-        // Feed = own posts + friends' posts
+        // Feed = own posts + friends' posts, respecting privacy settings
         const authorIds = [userId, ...friendIds]
 
         const [posts, total] = await Promise.all([
             prisma.post.findMany({
-                where: { authorId: { in: authorIds } },
+                where: {
+                    authorId: { in: authorIds },
+                    OR: [
+                        { privacy: 'public' },
+                        { privacy: 'friends', authorId: userId },
+                        { privacy: 'friends', authorId: { in: friendIds } },
+                        { privacy: 'private', authorId: userId },
+                    ],
+                },
                 include: POST_INCLUDE,
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take: limit,
             }),
             prisma.post.count({
-                where: { authorId: { in: authorIds } },
+                where: {
+                    authorId: { in: authorIds },
+                    OR: [
+                        { privacy: 'public' },
+                        { privacy: 'friends', authorId: userId },
+                        { privacy: 'friends', authorId: { in: friendIds } },
+                        { privacy: 'private', authorId: userId },
+                    ],
+                },
             }),
         ])
 
@@ -149,6 +165,7 @@ const createPost = async (req, res, next) => {
                     image: photoPath,
                     video: videoPath,
                     authorId: req.user.id,
+                    privacy: req.body.privacy || 'public',
                     tags: taggedIds.length
                         ? { create: taggedIds.map(uid => ({ userId: uid })) }
                         : undefined,
