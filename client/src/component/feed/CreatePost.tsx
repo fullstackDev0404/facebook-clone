@@ -1,32 +1,15 @@
 "use client"
-import React, { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
-import { ImageIcon, Loader2, Search, Send, Smile, Tag, X, Globe, Users, Lock } from 'lucide-react'
+import React, { useState, useRef } from 'react'
+import { ImageIcon, Loader2, Send, Smile, Tag, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
-import { friendsApi } from '@/lib/api'
 import { API_BASE_URL, STORAGE_KEYS } from '@/lib/constants'
 import type { Author, PostRecord } from '@/types'
 import { avatarSrc, initials } from './feedUtils'
-
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime']
-const ALLOWED_TYPES = [...IMAGE_TYPES, ...VIDEO_TYPES]
-
-const FEELINGS = [
-  { emoji: '😊', label: 'happy' },
-  { emoji: '😢', label: 'sad' },
-  { emoji: '😍', label: 'in love' },
-  { emoji: '😂', label: 'amused' },
-  { emoji: '😎', label: 'cool' },
-  { emoji: '😡', label: 'angry' },
-  { emoji: '🥳', label: 'celebrating' },
-  { emoji: '😴', label: 'tired' },
-  { emoji: '🤒', label: 'sick' },
-  { emoji: '🙏', label: 'grateful' },
-  { emoji: '💪', label: 'motivated' },
-  { emoji: '😤', label: 'frustrated' },
-]
+import MediaUploader, { MediaUploaderRef } from './CreatePost/MediaUploader'
+import TagPeoplePanel from './CreatePost/TagPeoplePanel'
+import FeelingPicker from './CreatePost/FeelingPicker'
+import PrivacySelector from './CreatePost/PrivacySelector'
 
 interface Props { onPostCreated: (post: PostRecord) => void }
 
@@ -40,31 +23,12 @@ const CreatePost = ({ onPostCreated }: Props) => {
   const [feeling, setFeeling]           = useState<{ emoji: string; label: string } | null>(null)
   const [showFeelings, setShowFeelings] = useState(false)
   const [showTagPanel, setShowTagPanel] = useState(false)
-  const [tagSearch, setTagSearch]       = useState('')
-  const [friends, setFriends]           = useState<Author[]>([])
   const [tagged, setTagged]             = useState<Author[]>([])
-  const [loadingFriends, setLoadingFriends] = useState(false)
   const [loading, setLoading]           = useState(false)
   const [error, setError]               = useState<string | null>(null)
   const [privacy, setPrivacy]           = useState<'public' | 'friends' | 'private'>('public')
-  const [showPrivacyMenu, setShowPrivacyMenu] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
-  const privacyRef = useRef<HTMLDivElement>(null)
+  const mediaUploaderRef = useRef<MediaUploaderRef>(null)
 
-  // Load friends when tag panel opens
-  useEffect(() => {
-    if (!showTagPanel || friends.length > 0) return
-    setLoadingFriends(true)
-    friendsApi.getFriends()
-      .then(d => setFriends(d.friends.map(f => f.friend)))
-      .catch(() => {})
-      .finally(() => setLoadingFriends(false))
-  }, [showTagPanel]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const filteredFriends = friends.filter(f =>
-    `${f.firstName} ${f.lastName}`.toLowerCase().includes(tagSearch.toLowerCase()) &&
-    !tagged.find(t => t.id === f.id)
-  )
 
   const toggleTag = (friend: Author) => {
     setTagged(prev =>
@@ -74,26 +38,19 @@ const CreatePost = ({ onPostCreated }: Props) => {
     )
   }
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0] ?? null
-    if (!f) return
-    if (!ALLOWED_TYPES.includes(f.type)) {
-      setError('Only images (JPEG, PNG, GIF, WebP) or videos (MP4, WebM) allowed.')
+  const handleFileChange = (f: File | null) => {
+    if (!f) {
+      setFile(null)
+      if (preview) URL.revokeObjectURL(preview)
+      setPreview(null)
+      setIsVideo(false)
       return
     }
     setFile(f)
     setPreview(URL.createObjectURL(f))
-    setIsVideo(VIDEO_TYPES.includes(f.type))
+    setIsVideo(f.type.startsWith('video/'))
     setError(null)
     setExpanded(true)
-  }
-
-  const removeFile = () => {
-    setFile(null)
-    if (preview) URL.revokeObjectURL(preview)
-    setPreview(null)
-    setIsVideo(false)
-    if (fileRef.current) fileRef.current.value = ''
   }
 
   const handleSubmit = async () => {
@@ -122,7 +79,7 @@ const CreatePost = ({ onPostCreated }: Props) => {
       if (!res.ok) throw new Error(data.error || 'Failed to create post')
 
       setContent('')
-      removeFile()
+      handleFileChange(null)
       setFeeling(null)
       setTagged([])
       setPrivacy('public')
@@ -137,24 +94,6 @@ const CreatePost = ({ onPostCreated }: Props) => {
     }
   }
 
-  // Close privacy menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (privacyRef.current && !privacyRef.current.contains(event.target as Node)) {
-        setShowPrivacyMenu(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const privacyOptions = [
-    { value: 'public' as const, icon: Globe, label: 'Public', description: 'Anyone can see' },
-    { value: 'friends' as const, icon: Users, label: 'Friends', description: 'Only friends' },
-    { value: 'private' as const, icon: Lock, label: 'Private', description: 'Only you' },
-  ]
-
-  const selectedPrivacy = privacyOptions.find(p => p.value === privacy) || privacyOptions[0]
 
   const userInitials = user ? initials(user.firstName, user.lastName) : 'U'
 
@@ -221,164 +160,40 @@ const CreatePost = ({ onPostCreated }: Props) => {
         )}
       </div>
 
-      {/* Media preview */}
-      {preview && (
-        <div className="relative mb-3 rounded-xl overflow-hidden bg-[#f0f2f5]">
-          {isVideo ? (
-            <video src={preview} controls className="w-full max-h-72" />
-          ) : (
-            <Image src={preview} alt="Preview" width={600} height={400} className="w-full object-cover max-h-72" unoptimized />
-          )}
-          <button
-            onClick={removeFile}
-            className="absolute top-2 right-2 bg-white/90 hover:bg-white rounded-full p-1.5 shadow"
-            aria-label="Remove"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+      <MediaUploader
+        ref={mediaUploaderRef}
+        file={file}
+        preview={preview}
+        isVideo={isVideo}
+        onFileChange={handleFileChange}
+        onRemove={() => handleFileChange(null)}
+      />
 
-      {/* Tag People panel */}
-      {showTagPanel && (
-        <div className="mb-3 rounded-xl border border-[#ced0d4] dark:border-[#3e4042] overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-2 border-b border-[#f0f2f5] dark:border-[#3e4042]">
-            <Search className="w-4 h-4 text-[#65676b] shrink-0" />
-            <input
-              autoFocus
-              type="text"
-              placeholder="Search friends to tag…"
-              value={tagSearch}
-              onChange={e => setTagSearch(e.target.value)}
-              className="flex-1 bg-transparent outline-none text-sm text-[#050505] dark:text-[#e4e6eb] placeholder-[#65676b]"
-            />
-            {tagSearch && (
-              <button onClick={() => setTagSearch('')}>
-                <X className="w-3.5 h-3.5 text-[#65676b]" />
-              </button>
-            )}
-          </div>
+      <TagPeoplePanel
+        show={showTagPanel}
+        onClose={() => setShowTagPanel(false)}
+        tagged={tagged}
+        onToggleTag={toggleTag}
+      />
 
-          <div className="max-h-48 overflow-y-auto">
-            {loadingFriends ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="w-5 h-5 animate-spin text-[#1877f2]" />
-              </div>
-            ) : filteredFriends.length === 0 ? (
-              <p className="text-sm text-[#65676b] text-center py-4">
-                {tagSearch ? 'No friends match.' : friends.length === 0 ? 'No friends to tag yet.' : 'All friends already tagged.'}
-              </p>
-            ) : (
-              filteredFriends.map(friend => (
-                <button
-                  key={friend.id}
-                  onClick={() => toggleTag(friend)}
-                  className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-left"
-                >
-                  <Avatar className="w-8 h-8 shrink-0">
-                    <AvatarImage src={avatarSrc(friend.avatar)} />
-                    <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
-                      {initials(friend.firstName, friend.lastName)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-[#050505] dark:text-[#e4e6eb] flex-1">
-                    {friend.firstName} {friend.lastName}
-                  </span>
-                  {tagged.find(t => t.id === friend.id) && (
-                    <span className="text-[#1877f2] text-xs font-semibold">Tagged ✓</span>
-                  )}
-                </button>
-              ))
-            )}
-          </div>
-
-          {tagged.length > 0 && (
-            <div className="px-3 py-2 border-t border-[#f0f2f5] dark:border-[#3e4042] flex items-center justify-between">
-              <span className="text-xs text-[#65676b]">{tagged.length} tagged</span>
-              <button
-                onClick={() => setShowTagPanel(false)}
-                className="text-xs font-semibold text-[#1877f2] hover:underline"
-              >
-                Done
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Feeling picker */}
-      {showFeelings && (
-        <div className="mb-3 p-3 bg-[#f0f2f5] dark:bg-[#3a3b3c] rounded-xl">
-          <p className="text-xs font-semibold text-[#65676b] mb-2 uppercase tracking-wide">How are you feeling?</p>
-          <div className="flex flex-wrap gap-2">
-            {FEELINGS.map(f => (
-              <button
-                key={f.label}
-                onClick={() => { setFeeling(f); setShowFeelings(false); setExpanded(true) }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  feeling?.label === f.label
-                    ? 'bg-[#1877f2] text-white'
-                    : 'bg-white dark:bg-[#242526] text-[#050505] dark:text-[#e4e6eb] hover:bg-[#e7f3ff] hover:text-[#1877f2]'
-                }`}
-              >
-                <span>{f.emoji}</span> {f.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <FeelingPicker
+        show={showFeelings}
+        selected={feeling}
+        onSelect={(f) => { setFeeling(f); setShowFeelings(false); setExpanded(true) }}
+      />
 
       {error && <p className="text-xs text-red-500 mb-2 px-1">{error}</p>}
 
-      {/* Action bar */}
       <div className="border-t border-[#ced0d4] dark:border-[#3e4042] pt-2 mt-1 flex items-center justify-between">
         <div className="flex items-center gap-1">
-          {/* Privacy selector */}
-          <div ref={privacyRef} className="relative">
-            <button
-              onClick={() => setShowPrivacyMenu(v => !v)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]"
-            >
-              <selectedPrivacy.icon className="w-5 h-5" style={{ color: '#65676b' }} />
-              <span className="text-sm font-medium text-[#65676b] hidden sm:inline">{selectedPrivacy.label}</span>
-            </button>
-
-            {showPrivacyMenu && (
-              <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-[#242526] rounded-xl shadow-lg border border-[#ced0d4] dark:border-[#3e4042] overflow-hidden z-10">
-                {privacyOptions.map(option => (
-                  <button
-                    key={option.value}
-                    onClick={() => { setPrivacy(option.value); setShowPrivacyMenu(false) }}
-                    className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-left"
-                  >
-                    <option.icon className="w-5 h-5 text-[#65676b]" />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-[#050505] dark:text-[#e4e6eb]">{option.label}</div>
-                      <div className="text-xs text-[#65676b]">{option.description}</div>
-                    </div>
-                    {privacy === option.value && (
-                      <div className="w-2 h-2 bg-[#1877f2] rounded-full" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <input
-            ref={fileRef}
-            type="file"
-            accept={ALLOWED_TYPES.join(',')}
-            className="hidden"
-            onChange={handleFile}
-          />
+          <PrivacySelector value={privacy} onChange={setPrivacy} />
           {[
             {
               icon: ImageIcon,
               color: '#45bd62',
               label: 'Photo/Video',
               active: !!file,
-              onClick: () => { setExpanded(true); fileRef.current?.click() },
+              onClick: () => { setExpanded(true); mediaUploaderRef.current?.triggerFileInput() },
             },
             {
               icon: Tag,

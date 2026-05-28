@@ -6,6 +6,10 @@ import { friendsApi } from '@/lib/api'
 import { connectSocket } from '@/lib/socket'
 import type { Author } from '@/types'
 
+// Shared utility for generating initials
+const getInitials = (author: Author): string =>
+    `${author.firstName[0] ?? ''}${author.lastName[0] ?? ''}`.toUpperCase()
+
 // ─── Contacts section (real friends from API) ─────────────────────────────────
 const ContactsList = () => {
     const [friends, setFriends] = useState<{ friendshipId: string; friend: Author }[]>([])
@@ -16,7 +20,7 @@ const ContactsList = () => {
     useEffect(() => {
         friendsApi.getFriends()
             .then(d => setFriends(d.friends))
-            .catch(() => {})
+            .catch(err => console.error('Failed to load friends:', err))
             .finally(() => setLoading(false))
     }, [])
 
@@ -29,7 +33,7 @@ const ContactsList = () => {
         }
 
         const handleUserOnline = ({ userId }: { userId: string }) => {
-            setOnlineFriendIds(prev => new Set(prev).add(userId))
+            setOnlineFriendIds(prev => new Set([...prev, userId]))
         }
 
         const handleUserOffline = ({ userId }: { userId: string }) => {
@@ -48,15 +52,13 @@ const ContactsList = () => {
             socket.off('online:init', handleOnlineInit)
             socket.off('user:online', handleUserOnline)
             socket.off('user:offline', handleUserOffline)
+            socket.disconnect()
         }
     }, [])
 
     const filtered = friends.filter(({ friend }) =>
         `${friend.firstName} ${friend.lastName}`.toLowerCase().includes(search.toLowerCase())
     )
-
-    const initials = (a: Author) =>
-        `${a.firstName[0] ?? ''}${a.lastName[0] ?? ''}`.toUpperCase()
 
     return (
         <div className="px-3">
@@ -101,11 +103,11 @@ const ContactsList = () => {
                         key={friendshipId}
                         className="flex items-center gap-3 w-full px-2 py-2 rounded-xl hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-left group"
                     >
-<div className="relative shrink-0">
+                        <div className="relative shrink-0">
                              <Avatar className="w-9 h-9">
                                  <AvatarImage src={friend.avatar ?? undefined} />
                                  <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
-                                     {initials(friend)}
+                                     {getInitials(friend)}
                                  </AvatarFallback>
                              </Avatar>
                              {onlineFriendIds.has(friend.id) && (
@@ -136,7 +138,7 @@ const PeopleYouMayKnow = () => {
     useEffect(() => {
         friendsApi.getSuggestions()
             .then(d => setPeople(d.suggestions.slice(0, 5)))
-            .catch(() => {})
+            .catch(err => console.error('Failed to load suggestions:', err))
             .finally(() => setLoading(false))
     }, [])
 
@@ -151,9 +153,6 @@ const PeopleYouMayKnow = () => {
             setStates(s => ({ ...s, [id]: 'idle' }))
         }
     }
-
-    const initials = (a: Author) =>
-        `${a.firstName[0] ?? ''}${a.lastName[0] ?? ''}`.toUpperCase()
 
     if (loading) return (
         <div className="px-3 mb-4">
@@ -177,7 +176,7 @@ const PeopleYouMayKnow = () => {
                             <Avatar className="w-9 h-9 shrink-0">
                                 <AvatarImage src={user.avatar ?? undefined} />
                                 <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
-                                    {initials(user)}
+                                    {getInitials(user)}
                                 </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">

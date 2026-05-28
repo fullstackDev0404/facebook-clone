@@ -1,10 +1,7 @@
 "use client"
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
-import {
-    Search, Home, Users, Tv, Store, Bell, MessageCircle,
-    Menu, LogOut, Settings, User, X, BarChart3,
-} from 'lucide-react'
+import { Bell, MessageCircle, Menu } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { avatarSrc } from '@/component/feed/feedUtils'
 import { useAuth } from '@/context/AuthContext'
@@ -12,14 +9,9 @@ import { useRouter, usePathname } from 'next/navigation'
 import { notificationsApi } from '@/lib/api'
 import { connectSocket } from '@/lib/socket'
 import NotificationsPanel from './notifications/NotificationsPanel'
-import SearchResults from './SearchResults'
-
-const NAV_ITEMS = [
-    { icon: Home,  label: 'Home',        href: '/'        },
-    { icon: Users, label: 'Friends',     href: '/friends' },
-    { icon: Tv,    label: 'Watch',       href: null       },
-    { icon: Store, label: 'Marketplace', href: null       },
-]
+import SearchBar from './Header/SearchBar'
+import Navigation from './Header/Navigation'
+import ProfileDropdown from './Header/ProfileDropdown'
 
 
 
@@ -28,14 +20,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const router = useRouter()
     const pathname = usePathname()
 
-    const [searchFocused, setSearchFocused] = useState(false)
-    const [searchQuery, setSearchQuery]     = useState('')
     const [profileOpen, setProfileOpen]     = useState(false)
     const [notifOpen, setNotifOpen]         = useState(false)
     const [unreadCount, setUnreadCount]     = useState(0)
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
 
-    const profileRef = useRef<HTMLDivElement>(null)
     const notifRef   = useRef<HTMLDivElement>(null)
 
     // Determine active nav based on current pathname
@@ -49,15 +38,6 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
     const activeNav = getActiveNav()
 
-    // Close profile dropdown on outside click
-    useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (profileRef.current && !profileRef.current.contains(e.target as Node))
-                setProfileOpen(false)
-        }
-        document.addEventListener('mousedown', handler)
-        return () => document.removeEventListener('mousedown', handler)
-    }, [])
 
     // Close notifications panel on outside click
     useEffect(() => {
@@ -135,14 +115,14 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     }, [pathname])
 
     const handleLogout = () => { logout(); router.push('/login') }
-    const fullName = user ? `${user.firstName} ${user.lastName}` : ''
-    const initials = user
-        ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase()
-        : 'U'
     const headerAvatarSrc = avatarSrc(user?.avatar ?? null)
 
     const handleNavClick = (_label: string, href: string | null) => {
         if (href) router.push(href)
+    }
+
+    const handleNavigate = (path: string) => {
+        router.push(path)
     }
 
     return (
@@ -158,60 +138,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                     <button onClick={() => router.push('/')} className="shrink-0">
                         <Image src="/images/facebook-logo.jpg" alt="Facebook" width={40} height={40} className="rounded-full" />
                     </button>
-
-                    <div className="relative">
-                        <div className={`flex items-center gap-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] rounded-full px-3 py-2 transition-all duration-200 ${searchFocused ? 'w-52' : 'w-44'}`}>
-                            <Search className="w-4 h-4 text-[#65676b] shrink-0" />
-                            <input
-                                type="text"
-                                placeholder="Search Facebook"
-                                value={searchQuery}
-                                onChange={e => setSearchQuery(e.target.value)}
-                                onFocus={() => setSearchFocused(true)}
-                                onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                                className="bg-transparent outline-none text-[14px] text-[#050505] dark:text-[#e4e6eb] placeholder-[#65676b] w-full min-w-0"
-                            />
-                            {searchFocused && searchQuery && (
-                                <button onClick={() => setSearchQuery('')} className="shrink-0">
-                                    <X className="w-3.5 h-3.5 text-[#65676b]" />
-                                </button>
-                            )}
-                        </div>
-                        {searchFocused && (
-                            <SearchResults 
-                                query={searchQuery} 
-                                onClose={() => {
-                                    setSearchQuery('')
-                                    setSearchFocused(false)
-                                }} 
-                            />
-                        )}
-                    </div>
+                    <SearchBar onNavigate={handleNavigate} />
                 </div>
 
                 {/* Center: Nav icons — desktop only */}
-                <nav className="hidden md:flex flex-1 items-stretch">
-                    {NAV_ITEMS.map(({ icon: Icon, label, href }) => (
-                        <button
-                            key={label}
-                            onClick={() => handleNavClick(label, href)}
-                            title={label}
-                            className={`relative flex flex-1 items-center justify-center transition-colors group ${
-                                activeNav === label
-                                    ? 'text-[#1877f2]'
-                                    : 'text-[#65676b] dark:text-[#b0b3b8] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
-                            }`}
-                        >
-                            <Icon className="w-6 h-6" strokeWidth={activeNav === label ? 2.5 : 2} />
-                            {activeNav === label && (
-                                <span className="absolute bottom-0 left-0 right-0 h-0.75 bg-[#1877f2] rounded-t-sm" />
-                            )}
-                            <span className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-[#1c1e21] text-white text-[11px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg z-50">
-                                {label}
-                            </span>
-                        </button>
-                    ))}
-                </nav>
+                <Navigation activeNav={activeNav} onNavClick={handleNavClick} />
 
                 {/* Right: Actions */}
                 <div className="flex items-center gap-3 shrink-0 ml-auto">
@@ -264,7 +195,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                     </div>
 
                     {/* Profile */}
-                    <div className="relative" ref={profileRef}>
+                    <div className="relative">
                         <button
                             onClick={() => setProfileOpen(o => !o)}
                             className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
@@ -273,110 +204,22 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                         >
                         <Avatar className="w-9 h-9">
                             <AvatarImage src={headerAvatarSrc} className="" />
-                            <AvatarFallback className="bg-[#1877f2] text-white text-sm font-bold">{initials}</AvatarFallback>
+                            <AvatarFallback className="bg-[#1877f2] text-white text-sm font-bold">{user ? `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`.toUpperCase() : 'U'}</AvatarFallback>
                         </Avatar>
                         </button>
-
-                        {profileOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#242526] rounded-2xl p-2 z-50"
-                                style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.14)' }}>
-                                <button 
-                                    onClick={() => {
-                                        router.push(`/profile/${user?.id}`)
-                                        setProfileOpen(false)
-                                    }}
-                                    className="flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl cursor-pointer transition-colors w-full text-left">
-                            <Avatar className="w-14 h-14 shrink-0">
-                                <AvatarImage src={headerAvatarSrc} className="" />
-                                <AvatarFallback className="bg-[#1877f2] text-white text-xl font-bold">{initials}</AvatarFallback>
-                            </Avatar>
-                                    <div>
-                                        <p className="font-semibold text-[15px] text-[#050505] dark:text-[#e4e6eb]">{fullName}</p>
-                                        {user?.username && (
-                                            <p className="text-[12px] text-[#65676b] dark:text-[#b0b3b8] font-medium">@{user.username}</p>
-                                        )}
-                                        <p className="text-[13px] text-[#1877f2] font-medium mt-0.5">See your profile</p>
-                                    </div>
-                                </button>
-
-                                <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
-
-                                <button
-                                    onClick={() => {
-                                        router.push('/profile/edit')
-                                        setProfileOpen(false)
-                                    }}
-                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
-                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
-                                        <Settings className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]">Edit profile</p>
-                                        <p className="text-[12px] text-[#65676b]">Name, username, avatar, bio</p>
-                                    </div>
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        router.push('/analytics')
-                                        setProfileOpen(false)
-                                    }}
-                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
-                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
-                                        <BarChart3 className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="text-[14px] font-medium text-[#050505] dark:text-[#e4e6eb]">Analytics</p>
-                                        <p className="text-[12px] text-[#65676b]">View your activity stats</p>
-                                    </div>
-                                </button>
-
-                                <button
-                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
-                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
-                                        <User className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
-                                    </div>
-                                    Help & support
-                                </button>
-
-                                <div className="h-px bg-[#f0f2f5] dark:bg-[#3e4042] my-2" />
-
-                                <button onClick={handleLogout}
-                                    className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-xl transition-colors text-[14px] text-[#050505] dark:text-[#e4e6eb] font-medium">
-                                    <div className="w-9 h-9 rounded-full bg-[#f0f2f5] dark:bg-[#3a3b3c] flex items-center justify-center shrink-0">
-                                        <LogOut className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
-                                    </div>
-                                    Log out
-                                </button>
-
-                                <p className="text-[11px] text-[#8a8d91] px-3 pt-3 pb-1 leading-relaxed">
-                                    Privacy · Terms · Advertising · Cookies · More · Meta © {new Date().getFullYear()}
-                                </p>
-                            </div>
-                        )}
+                        <ProfileDropdown
+                            open={profileOpen}
+                            onOpenChange={setProfileOpen}
+                            user={user}
+                            onNavigate={handleNavigate}
+                            onLogout={handleLogout}
+                        />
                     </div>
                 </div>
             </div>
 
             {/* ── MOBILE ROW 2: Nav icons ── */}
-            <div className="flex md:hidden items-center border-t border-[#f0f2f5] dark:border-[#3e4042]" style={{ height: 48 }}>
-                {NAV_ITEMS.map(({ icon: Icon, label, href }) => (
-                    <button
-                        key={label}
-                        onClick={() => handleNavClick(label, href)}
-                        className={`relative flex flex-1 items-center justify-center h-full transition-colors ${
-                            activeNav === label
-                                ? 'text-[#1877f2]'
-                                : 'text-[#65676b] dark:text-[#b0b3b8] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
-                        }`}
-                    >
-                        <Icon className="w-6 h-6" strokeWidth={activeNav === label ? 2.5 : 2} />
-                        {activeNav === label && (
-                            <span className="absolute bottom-0 left-0 right-0 h-0.75 bg-[#1877f2] rounded-t-sm" />
-                        )}
-                    </button>
-                ))}
-            </div>
+            <Navigation activeNav={activeNav} onNavClick={handleNavClick} isMobile />
         </header>
     )
 }
