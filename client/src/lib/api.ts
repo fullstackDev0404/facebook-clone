@@ -364,3 +364,45 @@ export const moderationApi = {
       body: JSON.stringify({ text }),
     }),
 }
+
+// ─── Blocks ─────────────────────────────────────────────────────────────────────
+
+export interface Block {
+  id: string
+  blockerId: string
+  blockedId: string
+  createdAt: string
+  blocked: {
+    id: string
+    firstName: string
+    lastName: string
+    avatar: string | null
+    username: string | null
+  }
+}
+
+export const blocksApi = {
+  blockUser: (blockedId: string) =>
+    request<{ block: Block }>('/blocks', {
+      method: 'POST',
+      body: JSON.stringify({ blockedId }),
+    }),
+
+  unblockUser: (blockedId: string) =>
+    request<{ message: string }>(`/blocks/${blockedId}`, {
+      method: 'DELETE',
+    }),
+
+  getBlockedUsers: ({ page = 1, limit = 20 }: { page?: number; limit?: number } = {}) =>
+    request<{ blocks: Block[]; pagination: { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean } }>(
+      `/blocks?page=${page}&limit=${limit}`
+    ),
+
+  checkBlock: (userId: string) =>
+    request<{ isBlocked: boolean }>(`/blocks/check/${userId}`),
+
+  getBlockedBy: ({ page = 1, limit = 20 }: { page?: number; limit?: number } = {}) =>
+    request<{ blocks: Block[]; pagination: { page: number; limit: number; total: number; totalPages: number; hasNextPage: boolean } }>(
+      `/blocks/blocked-by?page=${page}&limit=${limit}`
+    ),
+}

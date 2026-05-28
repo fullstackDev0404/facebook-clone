@@ -1,13 +1,13 @@
 "use client"
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { MessageCircle, MoreHorizontal, Pencil, Share2, ThumbsUp, Trash2, X, Loader2, Globe, Users, Lock } from 'lucide-react'
+import { MessageCircle, MoreHorizontal, Pencil, Share2, ThumbsUp, Trash2, X, Loader2, Globe, Users, Lock, Flag, UserX } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
-import { postsApi } from '@/lib/api'
+import { postsApi, moderationApi, blocksApi } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 import type { PostRecord } from '@/types'
 import { avatarSrc, initials, timeAgo } from './feedUtils'
@@ -39,6 +39,12 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const [deleting, setDeleting]           = useState(false)
   const [shareStatus, setShareStatus]     = useState<'Share' | 'Copied!' | 'Shared'>('Share')
   const [editError, setEditError]         = useState('')
+  const [reportOpen, setReportOpen]       = useState(false)
+  const [blockOpen, setBlockOpen]         = useState(false)
+  const [blocking, setBlocking]           = useState(false)
+  const [reporting, setReporting]         = useState(false)
+  const [reportReason, setReportReason]   = useState('')
+  const [reportDescription, setReportDescription] = useState('')
   const menuRef                           = useRef<HTMLDivElement>(null)
   const reactionsRef                       = useRef<HTMLDivElement | null>(null)
   const longPressTimer                     = useRef<number | null>(null)
@@ -201,6 +207,42 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
     } catch { setDeleting(false) }
   }
 
+  const handleReport = async () => {
+    if (!reportReason) return
+    setReporting(true)
+    try {
+      await moderationApi.createReport({
+        entityType: 'post',
+        entityId: post.id,
+        reason: reportReason,
+        description: reportDescription || undefined
+      })
+      setReportOpen(false)
+      setReportReason('')
+      setReportDescription('')
+      alert('Post reported successfully')
+    } catch (err) {
+      alert('Failed to report post')
+    } finally {
+      setReporting(false)
+    }
+  }
+
+  const handleBlock = async () => {
+    if (!user || !post.author.id) return
+    setBlocking(true)
+    try {
+      await blocksApi.blockUser(post.author.id)
+      setBlockOpen(false)
+      alert('User blocked successfully')
+      onDeleted?.(post.id)
+    } catch (err) {
+      alert('Failed to block user')
+    } finally {
+      setBlocking(false)
+    }
+  }
+
   const onCommentAdded = () =>
     setPost(p => ({ ...p, _count: { ...p._count, likes: p._count?.likes ?? 0, comments: (p._count?.comments ?? 0) + 1 } }))
 
@@ -233,6 +275,90 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
             >
               {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               Delete
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Report dialog ── */}
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-100 mx-auto mb-1">
+              <Flag className="w-6 h-6 text-orange-500" />
+            </div>
+            <DialogTitle className="text-center text-[17px]">Report post</DialogTitle>
+            <DialogDescription className="text-center text-[14px]">
+              Why are you reporting this post?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <select
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl bg-[#f0f2f5] dark:bg-[#3a3b3c] outline-none text-[15px] text-[#050505] dark:text-[#e4e6eb]"
+            >
+              <option value="">Select a reason</option>
+              <option value="spam">Spam</option>
+              <option value="harassment">Harassment</option>
+              <option value="inappropriate_content">Inappropriate content</option>
+              <option value="other">Other</option>
+            </select>
+            <textarea
+              value={reportDescription}
+              onChange={(e) => setReportDescription(e.target.value)}
+              rows={3}
+              placeholder="Additional details (optional)"
+              className="w-full px-3 py-2.5 rounded-xl bg-[#f0f2f5] dark:bg-[#3a3b3c] outline-none text-[15px] text-[#050505] dark:text-[#e4e6eb] resize-none"
+            />
+          </div>
+          <DialogFooter className="flex-row gap-2 sm:flex-row">
+            <button
+              onClick={() => setReportOpen(false)}
+              disabled={reporting}
+              className="flex-1 py-2.5 rounded-xl bg-[#e4e6eb] hover:bg-[#d8dadf] disabled:opacity-50 text-[#050505] text-[14px] font-semibold transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleReport}
+              disabled={reporting || !reportReason}
+              className="flex-1 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white text-[14px] font-semibold transition-colors flex items-center justify-center gap-2"
+            >
+              {reporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Flag className="w-4 h-4" />}
+              Report
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Block dialog ── */}
+      <Dialog open={blockOpen} onOpenChange={setBlockOpen}>
+        <DialogContent showCloseButton={false} className="max-w-sm">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-1">
+              <UserX className="w-6 h-6 text-red-500" />
+            </div>
+            <DialogTitle className="text-center text-[17px]">Block user?</DialogTitle>
+            <DialogDescription className="text-center text-[14px]">
+              You won&apos;t see posts from {name} anymore. They won&apos;t be able to see your posts or message you.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2 sm:flex-row">
+            <button
+              onClick={() => setBlockOpen(false)}
+              disabled={blocking}
+              className="flex-1 py-2.5 rounded-xl bg-[#e4e6eb] hover:bg-[#d8dadf] disabled:opacity-50 text-[#050505] text-[14px] font-semibold transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleBlock}
+              disabled={blocking}
+              className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white text-[14px] font-semibold transition-colors flex items-center justify-center gap-2"
+            >
+              {blocking ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserX className="w-4 h-4" />}
+              Block
             </button>
           </DialogFooter>
         </DialogContent>
@@ -287,12 +413,28 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
                     </button>
                   </>
                 ) : (
-                  <button
-                    onClick={() => setMenuOpen(false)}
-                    className={standardMenuItem}
-                  >
-                    Hide post
-                  </button>
+                  <>
+                    <button
+                      onClick={() => { setMenuOpen(false); setReportOpen(true) }}
+                      className={standardMenuItem}
+                    >
+                      <Flag className="w-4 h-4 text-[#65676b]" />
+                      Report post
+                    </button>
+                    <button
+                      onClick={() => { setMenuOpen(false); setBlockOpen(true) }}
+                      className={destructiveMenuItem}
+                    >
+                      <UserX className="w-4 h-4" />
+                      Block user
+                    </button>
+                    <button
+                      onClick={() => setMenuOpen(false)}
+                      className={standardMenuItem}
+                    >
+                      Hide post
+                    </button>
+                  </>
                 )}
               </div>
             )}

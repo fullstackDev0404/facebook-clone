@@ -7,11 +7,16 @@ import RightSidebar from '@/component/RightSidebar'
 import ProtectedRoute from '@/component/ProtectedRoute'
 import PostCard from '@/component/feed/PostCard'
 import { useAuth } from '@/context/AuthContext'
-import { usersApi, friendsApi } from '@/lib/api'
+import { usersApi, friendsApi, blocksApi } from '@/lib/api'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS } from '@/lib/constants'
 import { avatarSrc } from '@/component/feed/feedUtils'
 import type { PostRecord } from '@/types'
+import { UserX, Loader2 } from 'lucide-react'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from '@/components/ui/dialog'
 
 type Tab = 'posts' | 'about' | 'friends' | 'photos'
 
@@ -44,6 +49,8 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
   const [friends, setFriends] = useState<FriendEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [blockOpen, setBlockOpen] = useState(false)
+  const [blocking, setBlocking] = useState(false)
 
   const vw = useViewport()
   const showLeft = vw >= BREAKPOINTS.MOBILE
@@ -55,6 +62,21 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
     () => profile ? `${profile.firstName} ${profile.lastName}` : '',
     [profile]
   )
+
+  const handleBlock = async () => {
+    if (!user || !resolvedParams?.id) return
+    setBlocking(true)
+    try {
+      await blocksApi.blockUser(resolvedParams.id)
+      setBlockOpen(false)
+      alert('User blocked successfully')
+      window.location.href = '/'
+    } catch (err) {
+      alert('Failed to block user')
+    } finally {
+      setBlocking(false)
+    }
+  }
 
   useEffect(() => {
     if (!resolvedParams?.id) return
@@ -91,6 +113,38 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
         <Header />
+
+        {/* ── Block dialog ── */}
+        <Dialog open={blockOpen} onOpenChange={setBlockOpen}>
+          <DialogContent showCloseButton={false} className="max-w-sm">
+            <DialogHeader>
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-1">
+                <UserX className="w-6 h-6 text-red-500" />
+              </div>
+              <DialogTitle className="text-center text-[17px]">Block {profileName}?</DialogTitle>
+              <DialogDescription className="text-center text-[14px]">
+                You won&apos;t see posts from {profileName} anymore. They won&apos;t be able to see your posts or message you.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-row gap-2 sm:flex-row">
+              <button
+                onClick={() => setBlockOpen(false)}
+                disabled={blocking}
+                className="flex-1 py-2.5 rounded-xl bg-[#e4e6eb] hover:bg-[#d8dadf] disabled:opacity-50 text-[#050505] text-[14px] font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBlock}
+                disabled={blocking}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 disabled:opacity-60 text-white text-[14px] font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                {blocking ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserX className="w-4 h-4" />}
+                Block
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <div className="flex pt-14 w-full min-h-[calc(100vh-56px)]">
           {showLeft && (
@@ -148,6 +202,15 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
                         <span className="px-3 py-2 rounded-full bg-[#e7f3ff] text-[#1877f2] text-[13px] font-semibold">
                           Your profile
                         </span>
+                      )}
+                      {!isSelfProfile && (
+                        <button
+                          onClick={() => setBlockOpen(true)}
+                          className="px-3 py-2 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 text-[13px] font-semibold transition-colors flex items-center gap-1"
+                        >
+                          <UserX className="w-3.5 h-3.5" />
+                          Block
+                        </button>
                       )}
                     </div>
                   </div>

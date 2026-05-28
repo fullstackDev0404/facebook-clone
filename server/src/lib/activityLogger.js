@@ -52,6 +52,8 @@ const ACTIVITY_TYPES = {
   REPORT_CREATE: 'report_create',
   MODERATION_ACTION: 'moderation_action',
   CONTENT_FLAGGED: 'content_flagged',
+  BLOCK_CREATE: 'block_create',
+  BLOCK_DELETE: 'block_delete',
 }
 
 module.exports = { logActivity, ACTIVITY_TYPES }
