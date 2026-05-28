@@ -51,46 +51,83 @@ const searchPosts = async (req, res, next) => {
             return res.status(400).json({ error: 'Search query is required' })
         }
 
-        const posts = await prisma.post.findMany({
-            where: {
-                content: { contains: query, mode: 'insensitive' },
-            },
-            include: {
-                author: {
-                    select: { id: true, firstName: true, lastName: true, avatar: true },
+        // Use raw SQL to fetch posts with user's reaction in a single query
+        const postsQuery = userId ? `
+            SELECT
+                p.*,
+                l.type as "userReactionType"
+            FROM "Post" p
+            LEFT JOIN "Like" l ON l."postId" = p.id AND l."userId" = $1
+            WHERE p.content ILIKE $2
+            ORDER BY p."createdAt" DESC
+            LIMIT $3
+        ` : `
+            SELECT
+                p.*,
+                NULL as "userReactionType"
+            FROM "Post" p
+            WHERE p.content ILIKE $1
+            ORDER BY p."createdAt" DESC
+            LIMIT $2
+        `
+
+        const postsRaw = userId
+            ? await prisma.$queryRawUnsafe(postsQuery, userId, `%${query}%`, limit)
+            : await prisma.$queryRawUnsafe(postsQuery, `%${query}%`, limit)
+
+        // Fetch related data (author, counts, tags) for all posts
+        const postIds = postsRaw.map(p => p.id)
+        const [authors, likeCounts, commentCounts, tags] = await Promise.all([
+            prisma.user.findMany({
+                where: { id: { in: postsRaw.map(p => p.authorId) } },
+                select: { id: true, firstName: true, lastName: true, avatar: true },
+            }),
+            prisma.like.groupBy({
+                by: ['postId'],
+                where: { postId: { in: postIds } },
+                _count: true,
+            }),
+            prisma.comment.groupBy({
+                by: ['postId'],
+                where: { postId: { in: postIds } },
+                _count: true,
+            }),
+            prisma.postTag.findMany({
+                where: { postId: { in: postIds } },
+                include: {
+                    user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
                 },
-                _count: {
-                    select: { likes: true, comments: true },
-                },
-                tags: {
-                    include: {
-                        user: { select: { id: true, firstName: true, lastName: true, avatar: true } },
-                    },
-                },
-            },
-            orderBy: { createdAt: 'desc' },
-            take: limit,
+            }),
+        ])
+
+        const authorMap = new Map(authors.map(a => [a.id, a]))
+        const likeCountMap = new Map(likeCounts.map(lc => [lc.postId, lc._count]))
+        const commentCountMap = new Map(commentCounts.map(cc => [cc.postId, cc._count]))
+        const tagsMap = new Map()
+        tags.forEach(tag => {
+            if (!tagsMap.has(tag.postId)) tagsMap.set(tag.postId, [])
+            tagsMap.get(tag.postId).push(tag)
         })
 
-        // Attach user's reaction type if authenticated
-        let postsWithReaction = posts
-        if (userId) {
-            const postIds = posts.map(p => p.id)
-            const reactions = await prisma.like.findMany({
-                where: { postId: { in: postIds }, userId },
-                select: { postId: true, type: true }
-            })
+        const posts = postsRaw.map(post => ({
+            id: post.id,
+            content: post.content,
+            image: post.image,
+            video: post.video,
+            createdAt: post.createdAt,
+            updatedAt: post.updatedAt,
+            authorId: post.authorId,
+            privacy: post.privacy,
+            author: authorMap.get(post.authorId),
+            _count: {
+                likes: likeCountMap.get(post.id) || 0,
+                comments: commentCountMap.get(post.id) || 0,
+            },
+            tags: tagsMap.get(post.id) || [],
+            userReactionType: post.userReactionType,
+        }))
 
-            postsWithReaction = posts.map(post => {
-                const userReaction = reactions.find(r => r.postId === post.id)
-                return {
-                    ...post,
-                    userReactionType: userReaction ? userReaction.type : null,
-                }
-            })
-        }
-
-        res.json({ posts: postsWithReaction })
+        res.json({ posts })
     } catch (err) {
         next(err)
     }
@@ -133,40 +170,69 @@ const globalSearch = async (req, res, next) => {
         }
 
         if (type === 'all' || type === 'posts') {
-            const posts = await prisma.post.findMany({
-                where: {
-                    content: { contains: query, mode: 'insensitive' },
-                },
-                include: {
-                    author: {
-                        select: { id: true, firstName: true, lastName: true, avatar: true },
-                    },
-                    _count: {
-                        select: { likes: true, comments: true },
-                    },
-                },
-                orderBy: { createdAt: 'desc' },
-                take: limit,
-            })
+            // Use raw SQL to fetch posts with user's reaction in a single query
+            const postsQuery = userId ? `
+                SELECT
+                    p.*,
+                    l.type as "userReactionType"
+                FROM "Post" p
+                LEFT JOIN "Like" l ON l."postId" = p.id AND l."userId" = $1
+                WHERE p.content ILIKE $2
+                ORDER BY p."createdAt" DESC
+                LIMIT $3
+            ` : `
+                SELECT
+                    p.*,
+                    NULL as "userReactionType"
+                FROM "Post" p
+                WHERE p.content ILIKE $1
+                ORDER BY p."createdAt" DESC
+                LIMIT $2
+            `
 
-            // Attach user's reaction type if authenticated
-            if (userId) {
-                const postIds = posts.map(p => p.id)
-                const reactions = await prisma.like.findMany({
-                    where: { postId: { in: postIds }, userId },
-                    select: { postId: true, type: true }
-                })
+            const postsRaw = userId
+                ? await prisma.$queryRawUnsafe(postsQuery, userId, `%${query}%`, limit)
+                : await prisma.$queryRawUnsafe(postsQuery, `%${query}%`, limit)
 
-                results.posts = posts.map(post => {
-                    const userReaction = reactions.find(r => r.postId === post.id)
-                    return {
-                        ...post,
-                        userReactionType: userReaction ? userReaction.type : null,
-                    }
-                })
-            } else {
-                results.posts = posts
-            }
+            // Fetch related data (author, counts) for all posts
+            const postIds = postsRaw.map(p => p.id)
+            const [authors, likeCounts, commentCounts] = await Promise.all([
+                prisma.user.findMany({
+                    where: { id: { in: postsRaw.map(p => p.authorId) } },
+                    select: { id: true, firstName: true, lastName: true, avatar: true },
+                }),
+                prisma.like.groupBy({
+                    by: ['postId'],
+                    where: { postId: { in: postIds } },
+                    _count: true,
+                }),
+                prisma.comment.groupBy({
+                    by: ['postId'],
+                    where: { postId: { in: postIds } },
+                    _count: true,
+                }),
+            ])
+
+            const authorMap = new Map(authors.map(a => [a.id, a]))
+            const likeCountMap = new Map(likeCounts.map(lc => [lc.postId, lc._count]))
+            const commentCountMap = new Map(commentCounts.map(cc => [cc.postId, cc._count]))
+
+            results.posts = postsRaw.map(post => ({
+                id: post.id,
+                content: post.content,
+                image: post.image,
+                video: post.video,
+                createdAt: post.createdAt,
+                updatedAt: post.updatedAt,
+                authorId: post.authorId,
+                privacy: post.privacy,
+                author: authorMap.get(post.authorId),
+                _count: {
+                    likes: likeCountMap.get(post.id) || 0,
+                    comments: commentCountMap.get(post.id) || 0,
+                },
+                userReactionType: post.userReactionType,
+            }))
         }
 
         res.json(results)
