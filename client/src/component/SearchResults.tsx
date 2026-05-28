@@ -1,10 +1,11 @@
 "use client"
 import { useState, useEffect } from 'react'
-import { Search, User, FileText, X } from 'lucide-react'
+import { Search, User, FileText, X, UserX } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { searchApi } from '@/lib/api'
+import { searchApi, blocksApi } from '@/lib/api'
 import { avatarSrc } from './feed/feedUtils'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
 
 interface SearchResult {
   users?: import('@/types').Author[]
@@ -12,9 +13,11 @@ interface SearchResult {
 }
 
 const SearchResults = ({ query, onClose }: { query: string; onClose: () => void }) => {
+  const { user } = useAuth()
   const [results, setResults] = useState<SearchResult>({ users: [], posts: [] })
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'all' | 'users' | 'posts'>('all')
+  const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set())
   const router = useRouter()
 
   useEffect(() => {
@@ -28,6 +31,19 @@ const SearchResults = ({ query, onClose }: { query: string; onClose: () => void 
       try {
         const data = await searchApi.global(query, activeTab === 'all' ? 'all' : activeTab)
         setResults(data)
+        
+        // Check block status for users
+        if (data.users && user) {
+          const blockChecks = await Promise.all(
+            data.users.map(u => blocksApi.checkBlock(u.id).catch(() => ({ isBlocked: false })))
+          )
+          const blockedIds = new Set(
+            blockChecks
+              .filter((check, index) => check.isBlocked && data.users![index].id !== user.id)
+              .map((_, index) => data.users![index].id)
+          )
+          setBlockedUsers(blockedIds)
+        }
       } catch (error) {
         console.error('Search error:', error)
         setResults({ users: [], posts: [] })
@@ -38,7 +54,7 @@ const SearchResults = ({ query, onClose }: { query: string; onClose: () => void 
 
     const debounceTimer = setTimeout(fetchResults, 300)
     return () => clearTimeout(debounceTimer)
-  }, [query, activeTab])
+  }, [query, activeTab, user])
 
   const handleUserClick = (userId: string) => {
     router.push(`/profile/${userId}`)
@@ -87,25 +103,34 @@ const SearchResults = ({ query, onClose }: { query: string; onClose: () => void 
                     Users
                   </div>
                 )}
-                {results.users.map((user) => (
-                  <button
-                    key={user.id}
-                    onClick={() => handleUserClick(user.id)}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-lg transition-colors text-left"
-                  >
-                    <Avatar className="w-10 h-10 shrink-0">
-                      <AvatarImage src={avatarSrc(user.avatar ?? null)} />
-                      <AvatarFallback className="bg-[#1877f2] text-white text-sm font-bold">
-                        {user.firstName[0]}{user.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-[#050505] dark:text-[#e4e6eb]">
-                        {user.firstName} {user.lastName}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                {results.users.map((user) => {
+                  const isBlocked = blockedUsers.has(user.id)
+                  return (
+                    <button
+                      key={user.id}
+                      onClick={() => handleUserClick(user.id)}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-lg transition-colors text-left"
+                    >
+                      <Avatar className="w-10 h-10 shrink-0">
+                        <AvatarImage src={avatarSrc(user.avatar ?? null)} />
+                        <AvatarFallback className="bg-[#1877f2] text-white text-sm font-bold">
+                          {user.firstName[0]}{user.lastName[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-[#050505] dark:text-[#e4e6eb] flex items-center gap-2">
+                          {user.firstName} {user.lastName}
+                          {isBlocked && (
+                            <span className="flex items-center gap-1 text-[11px] text-red-500 font-medium">
+                              <UserX className="w-3 h-3" />
+                              Blocked
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
             )}
 

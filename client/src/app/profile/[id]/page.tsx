@@ -17,6 +17,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 
 type Tab = 'posts' | 'about' | 'friends' | 'photos'
 
@@ -69,10 +70,10 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
     try {
       await blocksApi.blockUser(resolvedParams.id)
       setBlockOpen(false)
-      alert('User blocked successfully')
+      toast.success('User blocked successfully')
       window.location.href = '/'
     } catch (err) {
-      alert('Failed to block user')
+      toast.error('Failed to block user')
     } finally {
       setBlocking(false)
     }

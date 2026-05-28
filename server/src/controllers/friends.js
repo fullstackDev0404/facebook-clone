@@ -158,11 +158,18 @@ const getPendingRequests = async (req, res, next) => {
 
 /**
  * GET /api/friends
- * Returns all accepted friends of the logged-in user.
+ * Returns all accepted friends of the logged-in user (excluding blocked users).
  */
 const getFriends = async (req, res, next) => {
   try {
     const userId = req.user.id
+
+    // Get IDs of users blocked by current user
+    const blockedUsers = await prisma.block.findMany({
+      where: { blockerId: userId },
+      select: { blockedId: true }
+    })
+    const blockedIds = new Set(blockedUsers.map(b => b.blockedId))
 
     const friendships = await prisma.friendship.findMany({
       where: {
@@ -176,12 +183,14 @@ const getFriends = async (req, res, next) => {
       orderBy: { updatedAt: 'desc' },
     })
 
-    // Normalize: always return the "other" user as the friend
-    const friends = friendships.map(f => ({
-      friendshipId: f.id,
-      friend: f.senderId === userId ? f.receiver : f.sender,
-      since:  f.updatedAt,
-    }))
+    // Normalize: always return the "other" user as the friend, excluding blocked users
+    const friends = friendships
+      .map(f => ({
+        friendshipId: f.id,
+        friend: f.senderId === userId ? f.receiver : f.sender,
+        since:  f.updatedAt,
+      }))
+      .filter(f => !blockedIds.has(f.friend.id))
 
     res.json({ friends })
   } catch (err) {
@@ -191,7 +200,7 @@ const getFriends = async (req, res, next) => {
 
 /**
  * GET /api/friends/suggestions
- * Returns users who are not yet friends and have no pending request.
+ * Returns users who are not yet friends, have no pending request, and are not blocked.
  */
 const getSuggestions = async (req, res, next) => {
   try {
@@ -203,10 +212,19 @@ const getSuggestions = async (req, res, next) => {
       select: { senderId: true, receiverId: true },
     })
 
+    // Get IDs of users blocked by current user
+    const blockedUsers = await prisma.block.findMany({
+      where: { blockerId: userId },
+      select: { blockedId: true }
+    })
+
     const excludeIds = new Set([userId])
     existing.forEach(f => {
       excludeIds.add(f.senderId)
       excludeIds.add(f.receiverId)
+    })
+    blockedUsers.forEach(b => {
+      excludeIds.add(b.blockedId)
     })
 
     const suggestions = await prisma.user.findMany({

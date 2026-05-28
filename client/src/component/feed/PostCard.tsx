@@ -1,12 +1,13 @@
 "use client"
 import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
-import { MessageCircle, MoreHorizontal, Pencil, Share2, ThumbsUp, Trash2, X, Loader2, Globe, Users, Lock, Flag, UserX } from 'lucide-react'
+import { MessageCircle, MoreHorizontal, Pencil, Share2, ThumbsUp, Trash2, X, Loader2, Globe, Users, Lock, Flag, UserX, ChevronDown, Check } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { postsApi, moderationApi, blocksApi } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
 import type { PostRecord } from '@/types'
@@ -45,6 +46,8 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const [reporting, setReporting]         = useState(false)
   const [reportReason, setReportReason]   = useState('')
   const [reportDescription, setReportDescription] = useState('')
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const menuRef                           = useRef<HTMLDivElement>(null)
   const reactionsRef                       = useRef<HTMLDivElement | null>(null)
   const longPressTimer                     = useRef<number | null>(null)
@@ -114,6 +117,16 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node))
         setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
+        setDropdownOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -220,9 +233,9 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
       setReportOpen(false)
       setReportReason('')
       setReportDescription('')
-      alert('Post reported successfully')
+      toast.success('Post reported successfully')
     } catch (err) {
-      alert('Failed to report post')
+      toast.error('Failed to report post')
     } finally {
       setReporting(false)
     }
@@ -234,10 +247,10 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
     try {
       await blocksApi.blockUser(post.author.id)
       setBlockOpen(false)
-      alert('User blocked successfully')
+      toast.success('User blocked successfully')
       onDeleted?.(post.id)
     } catch (err) {
-      alert('Failed to block user')
+      toast.error('Failed to block user')
     } finally {
       setBlocking(false)
     }
@@ -293,17 +306,60 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <select
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[#f0f2f5] dark:bg-[#3a3b3c] outline-none text-[15px] text-[#050505] dark:text-[#e4e6eb]"
-            >
-              <option value="">Select a reason</option>
-              <option value="spam">Spam</option>
-              <option value="harassment">Harassment</option>
-              <option value="inappropriate_content">Inappropriate content</option>
-              <option value="other">Other</option>
-            </select>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="w-full px-3 py-2.5 rounded-xl bg-[#f0f2f5] dark:bg-[#3a3b3c] outline-none text-[15px] text-[#050505] dark:text-[#e4e6eb] flex items-center justify-between"
+              >
+                <span>{reportReason ? reportReason.charAt(0).toUpperCase() + reportReason.slice(1).replace('_', ' ') : 'Select a reason'}</span>
+                <ChevronDown className={`w-4 h-4 text-[#65676b] transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {dropdownOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#242526] rounded-xl shadow-lg border border-[#ced0d4] dark:border-[#3e4042] overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => { setReportReason(''); setDropdownOpen(false) }}
+                    className="w-full px-3 py-2.5 text-[15px] text-[#050505] dark:text-[#e4e6eb] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] text-left flex items-center gap-2"
+                  >
+                    {!reportReason && <Check className="w-4 h-4 text-[#1877f2]" />}
+                    <span className={!reportReason ? 'text-[#1877f2]' : ''}>Select a reason</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setReportReason('spam'); setDropdownOpen(false) }}
+                    className="w-full px-3 py-2.5 text-[15px] text-[#050505] dark:text-[#e4e6eb] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] text-left flex items-center gap-2"
+                  >
+                    {reportReason === 'spam' && <Check className="w-4 h-4 text-[#1877f2]" />}
+                    <span className={reportReason === 'spam' ? 'text-[#1877f2]' : ''}>Spam</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setReportReason('harassment'); setDropdownOpen(false) }}
+                    className="w-full px-3 py-2.5 text-[15px] text-[#050505] dark:text-[#e4e6eb] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] text-left flex items-center gap-2"
+                  >
+                    {reportReason === 'harassment' && <Check className="w-4 h-4 text-[#1877f2]" />}
+                    <span className={reportReason === 'harassment' ? 'text-[#1877f2]' : ''}>Harassment</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setReportReason('inappropriate_content'); setDropdownOpen(false) }}
+                    className="w-full px-3 py-2.5 text-[15px] text-[#050505] dark:text-[#e4e6eb] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] text-left flex items-center gap-2"
+                  >
+                    {reportReason === 'inappropriate_content' && <Check className="w-4 h-4 text-[#1877f2]" />}
+                    <span className={reportReason === 'inappropriate_content' ? 'text-[#1877f2]' : ''}>Inappropriate content</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setReportReason('other'); setDropdownOpen(false) }}
+                    className="w-full px-3 py-2.5 text-[15px] text-[#050505] dark:text-[#e4e6eb] hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] text-left flex items-center gap-2"
+                  >
+                    {reportReason === 'other' && <Check className="w-4 h-4 text-[#1877f2]" />}
+                    <span className={reportReason === 'other' ? 'text-[#1877f2]' : ''}>Other</span>
+                  </button>
+                </div>
+              )}
+            </div>
             <textarea
               value={reportDescription}
               onChange={(e) => setReportDescription(e.target.value)}
