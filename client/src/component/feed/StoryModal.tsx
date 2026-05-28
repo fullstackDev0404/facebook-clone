@@ -1,8 +1,10 @@
 "use client"
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { X } from 'lucide-react'
+import { X, Trash2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { avatarSrc } from '@/component/feed/feedUtils'
+import { storiesApi } from '@/lib/api'
+import { useAuth } from '@/context/AuthContext'
 import type { StoryRecord } from '@/types'
 
 const STORY_DURATION = 5000 // ms per story
@@ -13,6 +15,7 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAdvance?: () => void
+  onStoryDeleted?: (storyId: string) => void
 }
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
@@ -35,14 +38,17 @@ function ProgressBar({ count, current, progress }: { count: number; current: num
 }
 
 // ─── StoryModal ───────────────────────────────────────────────────────────────
-const StoryModal = ({ stories, startIndex, open, onOpenChange }: Props) => {
+const StoryModal = ({ stories, startIndex, open, onOpenChange, onStoryDeleted }: Props) => {
+  const { user } = useAuth()
   const [currentIndex, setCurrentIndex] = useState(startIndex)
   const [progress, setProgress]         = useState(0)
+  const [deleting, setDeleting]         = useState(false)
   const startTimeRef = useRef<number>(0)
   const rafRef       = useRef<number>(0)
   const timerRef     = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const story = stories[currentIndex]
+  const isOwner = user?.id === story?.author.id
 
   const clearTimers = () => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -67,6 +73,20 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange }: Props) => {
     clearTimers()
     onOpenChange(false)
   }, [onOpenChange])
+
+  const handleDelete = async () => {
+    if (!story || !isOwner) return
+    setDeleting(true)
+    try {
+      await storiesApi.delete(story.id)
+      onStoryDeleted?.(story.id)
+      close()
+    } catch (err) {
+      console.error('Failed to delete story:', err)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   // Reset index when modal opens with a new startIndex
   useEffect(() => {
@@ -148,7 +168,7 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange }: Props) => {
             <ProgressBar count={stories.length} current={currentIndex} progress={progress} />
           </div>
 
-          {/* Header: author + close */}
+          {/* Header: author + close/delete */}
           <div className="relative z-10 flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full border-2 border-[#1877f2] overflow-hidden bg-white/20 flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -166,13 +186,25 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange }: Props) => {
                 <p className="text-white/60 text-[11px] mt-0.5">{Math.round(STORY_DURATION / 1000)}s</p>
               </div>
             </div>
-            <button
-              onClick={close}
-              className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition-colors"
-              aria-label="Close"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {isOwner && (
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="w-8 h-8 rounded-full bg-black/30 hover:bg-red-500/80 flex items-center justify-center text-white transition-colors disabled:opacity-50"
+                  aria-label="Delete story"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                onClick={close}
+                className="w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Tap zones — left / right */}

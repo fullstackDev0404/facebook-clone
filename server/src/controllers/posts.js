@@ -107,8 +107,8 @@ const createPost = async (req, res, next) => {
 
 /**
  * PATCH /api/posts/:id
- * Body: { content: string }
- * Edit a post's text content. Only the author can edit.
+ * Body (multipart/form-data or JSON): content (string, optional), image (file, optional), video (file, optional)
+ * Edit a post's content and media. Only the author can edit.
  */
 const updatePost = async (req, res, next) => {
     try {
@@ -119,11 +119,25 @@ const updatePost = async (req, res, next) => {
         const post = await prisma.post.findUnique({ where: { id } })
         if (!post)                    return res.status(404).json({ error: 'Post not found' })
         if (post.authorId !== userId) return res.status(403).json({ error: 'Not authorized' })
-        if (!content && !post.image)  return res.status(400).json({ error: 'Post must have text content or an image' })
+
+        // Handle file upload
+        let imagePath = req.file ? `uploads/posts/${req.file.filename}` : null
+        const isVideo = req.file && req.file.mimetype.startsWith('video/')
+        const videoPath = isVideo ? imagePath : null
+        const photoPath = isVideo ? null : imagePath
+
+        // Validate that post has content or media
+        if (!content && !photoPath && !videoPath && !post.image && !post.video) {
+            return res.status(400).json({ error: 'Post must have text content or an image/video' })
+        }
 
         const updated = await prisma.post.update({
             where: { id },
-            data:  { content },
+            data:  {
+                content: content !== null ? content : post.content,
+                image: photoPath !== null ? photoPath : post.image,
+                video: videoPath !== null ? videoPath : post.video,
+            },
             include: POST_INCLUDE,
         })
 

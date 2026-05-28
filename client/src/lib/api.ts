@@ -77,11 +77,24 @@ export const postsApi = {
   unlike: (postId: string) =>
     request(`/posts/${postId}/like`, { method: 'DELETE' }),
 
-  update: (postId: string, content: string) =>
-    request<{ post: import('@/types').PostRecord }>(`/posts/${postId}`, {
+  update: (postId: string, data: string | FormData) => {
+    const token = getToken()
+    if (data instanceof FormData) {
+      return fetch(`${API_BASE_URL}/posts/${postId}`, {
+        method: 'PATCH',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: data,
+      }).then(async (res) => {
+        const result = await res.json().catch(() => ({}))
+        if (!res.ok) throw new ApiError(result.error || 'Something went wrong', res.status)
+        return result as { post: import('@/types').PostRecord }
+      })
+    }
+    return request<{ post: import('@/types').PostRecord }>(`/posts/${postId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ content }),
-    }),
+      body: JSON.stringify({ content: data }),
+    })
+  },
 
   delete: (postId: string) =>
     request<{ message: string }>(`/posts/${postId}`, { method: 'DELETE' }),

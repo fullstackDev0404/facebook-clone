@@ -62,8 +62,8 @@ const getFeed = async (req, res, next) => {
             SELECT
                 p.*,
                 l.type as "userReactionType"
-            FROM "Post" p
-            LEFT JOIN "Like" l ON l."postId" = p.id AND l."userId" = $1
+            FROM "posts" p
+            LEFT JOIN "likes" l ON l."postId" = p.id AND l."userId" = $1
             WHERE p."authorId" = ANY($2)
             AND (
                 p.privacy = 'public'
@@ -77,7 +77,7 @@ const getFeed = async (req, res, next) => {
 
         const countQuery = `
             SELECT COUNT(*) as count
-            FROM "Post" p
+            FROM "posts" p
             WHERE p."authorId" = ANY($2)
             AND (
                 p.privacy = 'public'

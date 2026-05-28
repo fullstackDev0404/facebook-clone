@@ -29,7 +29,7 @@ const { createPostSchema, updatePostSchema } = require('../validation/posts')
 router.post('/', auth, handleUpload, validate({ body: createPostSchema }), createPost)
 
 // PATCH /api/posts/:id — edit a post (author only)
-router.patch('/:id', auth, validate({ body: updatePostSchema }), updatePost)
+router.patch('/:id', auth, handleUpload, updatePost)
 
 // DELETE /api/posts/:id — delete a post (author only)
 router.delete('/:id', auth, deletePost)

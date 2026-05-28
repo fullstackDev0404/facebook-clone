@@ -56,8 +56,8 @@ const searchPosts = async (req, res, next) => {
             SELECT
                 p.*,
                 l.type as "userReactionType"
-            FROM "Post" p
-            LEFT JOIN "Like" l ON l."postId" = p.id AND l."userId" = $1
+            FROM "posts" p
+            LEFT JOIN "likes" l ON l."postId" = p.id AND l."userId" = $1
             WHERE p.content ILIKE $2
             ORDER BY p."createdAt" DESC
             LIMIT $3
@@ -65,7 +65,7 @@ const searchPosts = async (req, res, next) => {
             SELECT
                 p.*,
                 NULL as "userReactionType"
-            FROM "Post" p
+            FROM "posts" p
             WHERE p.content ILIKE $1
             ORDER BY p."createdAt" DESC
             LIMIT $2
@@ -175,8 +175,8 @@ const globalSearch = async (req, res, next) => {
                 SELECT
                     p.*,
                     l.type as "userReactionType"
-                FROM "Post" p
-                LEFT JOIN "Like" l ON l."postId" = p.id AND l."userId" = $1
+                FROM "posts" p
+                LEFT JOIN "likes" l ON l."postId" = p.id AND l."userId" = $1
                 WHERE p.content ILIKE $2
                 ORDER BY p."createdAt" DESC
                 LIMIT $3
@@ -184,7 +184,7 @@ const globalSearch = async (req, res, next) => {
                 SELECT
                     p.*,
                     NULL as "userReactionType"
-                FROM "Post" p
+                FROM "posts" p
                 WHERE p.content ILIKE $1
                 ORDER BY p."createdAt" DESC
                 LIMIT $2
