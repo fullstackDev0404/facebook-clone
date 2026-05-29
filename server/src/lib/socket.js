@@ -5,6 +5,7 @@ const prisma = require('../lib/prisma')
 const logger = require('../lib/logger')
 
 let io
+const userConnections = new Map() // Track connections per user for connection pooling
 
 const initSocket = (server) => {
   io = new Server(server, {
@@ -13,6 +14,9 @@ const initSocket = (server) => {
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    maxHttpBufferSize: 1e6, // 1MB
   })
 
   io.use(async (socket, next) => {
@@ -20,7 +24,7 @@ const initSocket = (server) => {
       const token = socket.handshake.auth?.token || socket.handshake.query?.token
       if (!token) throw new Error('No token provided')
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET)
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: false })
       const user = await prisma.user.findUnique({
         where: { id: decoded.userId },
         select: { id: true, firstName: true, lastName: true, avatar: true },
@@ -28,17 +32,37 @@ const initSocket = (server) => {
 
       if (!user) throw new Error('User not found')
       socket.user = user
+      socket.tokenExpiry = decoded.exp * 1000 // Store expiry timestamp
       next()
     } catch (err) {
-      next(new Error('Authentication error'))
+      if (err.name === 'TokenExpiredError') {
+        next(new Error('Token expired'))
+      } else {
+        next(new Error('Authentication error'))
+      }
     }
   })
 
   io.on('connection', (socket) => {
     socket.requestId = crypto.randomUUID()
     socket.join(socket.user.id)
+    
+    // Track connection for connection pooling
+    const userId = socket.user.id
+    if (!userConnections.has(userId)) {
+      userConnections.set(userId, new Set())
+    }
+    userConnections.get(userId).add(socket)
+    
     socket.emit('socket:connected', { userId: socket.user.id })
-    logger.info({ event: 'socket:connected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId })
+    logger.info({ event: 'socket:connected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, connections: userConnections.get(userId)?.size })
+
+    // Check token expiry periodically
+    const tokenCheckInterval = setInterval(() => {
+      if (socket.tokenExpiry && Date.now() > socket.tokenExpiry - 60000) { // 1 minute before expiry
+        socket.emit('token:expiring', { expiresIn: socket.tokenExpiry - Date.now() })
+      }
+    }, 30000) // Check every 30 seconds
 
     socket.on('send_message', async (payload, callback) => {
       logger.info({ event: 'socket:send_message', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, payload: { receiverId: payload?.receiverId } })
@@ -85,8 +109,18 @@ const initSocket = (server) => {
       }
     })
 
-    socket.on('disconnect', () => {
-      logger.info({ event: 'socket:disconnected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId })
+    socket.on('disconnect', (reason) => {
+      clearInterval(tokenCheckInterval)
+      
+      // Remove from connection pool
+      if (userConnections.has(userId)) {
+        userConnections.get(userId).delete(socket)
+        if (userConnections.get(userId).size === 0) {
+          userConnections.delete(userId)
+        }
+      }
+      
+      logger.info({ event: 'socket:disconnected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, reason, remainingConnections: userConnections.get(userId)?.size })
       socket.leave(socket.user.id)
     })
   })
@@ -99,4 +133,8 @@ const getIo = () => {
   return io
 }
 
-module.exports = { initSocket, getIo }
+const getUserConnections = (userId) => {
+  return userConnections.get(userId)?.size || 0
+}
+
+module.exports = { initSocket, getIo, getUserConnections }

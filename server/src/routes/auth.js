@@ -103,4 +103,14 @@ router.get('/me', authMiddleware, (req, res) => {
     res.json({ user: req.user })
 })
 
+// ── Refresh Token ─────────────────────────────────────────────────────────────
+router.post('/refresh', authMiddleware, (req, res) => {
+    try {
+        const token = signToken(req.user.id)
+        res.json({ token })
+    } catch (err) {
+        next(err)
+    }
+})
+
 module.exports = router
