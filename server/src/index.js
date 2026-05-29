@@ -79,6 +79,33 @@ app.get('/health', (req, res) => {
 // API routes, 404 and global error handler are registered after async startup
 
 // ── Start server ──────────────────────────────────────────────────────────────
+async function connectWithRetry(maxRetries = 5, initialDelay = 1000) {
+    let attempt = 0
+    let delay = initialDelay
+
+    while (attempt < maxRetries) {
+        try {
+            await prisma.$connect()
+            logger.info({ msg: 'Database connected' })
+            return
+        } catch (err) {
+            attempt++
+            if (attempt >= maxRetries) {
+                throw err
+            }
+            logger.warn({ 
+                msg: 'Database connection failed, retrying...', 
+                attempt, 
+                maxRetries, 
+                delayMs: delay,
+                error: err.message 
+            })
+            await new Promise(resolve => setTimeout(resolve, delay))
+            delay = Math.min(delay * 2, 30000) // Exponential backoff, max 30s
+        }
+    }
+}
+
 async function start() {
     try {
         // Ensure upload directories exist before requiring routes (multer storages)
@@ -96,8 +123,7 @@ async function start() {
         // Global error handler
         app.use(errorHandler)
 
-        await prisma.$connect()
-        logger.info({ msg: 'Database connected' })
+        await connectWithRetry(5, 1000)
 
         const server = http.createServer(app)
         const io = initSocket(server)
@@ -119,7 +145,7 @@ async function start() {
             logger.info({ msg: 'Server listening', port: activePort, env: process.env.NODE_ENV || 'development', clients: io.engine.clientsCount })
         })
     } catch (err) {
-        logger.fatal({ msg: 'Failed to connect to database', error: err.message })
+        logger.fatal({ msg: 'Failed to connect to database after retries', error: err.message })
         process.exit(1)
     }
 }
