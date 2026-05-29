@@ -16,13 +16,13 @@ interface Props {
 const DeleteConfirmDialog = ({ open, onOpenChange, onDelete, deleting }: Props) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-sm">
+      <DialogContent showCloseButton={false} className="max-w-sm" aria-describedby="delete-post-description">
         <DialogHeader>
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-1">
             <Trash2 className="w-6 h-6 text-red-500" />
           </div>
           <DialogTitle className="text-center text-[17px]">Delete post?</DialogTitle>
-          <DialogDescription className="text-center text-[14px]">
+          <DialogDescription id="delete-post-description" className="text-center text-[14px]">
             This will permanently remove your post. You can&apos;t undo this.
           </DialogDescription>
         </DialogHeader>

@@ -20,6 +20,14 @@ const createSocket = (): Socket | null => {
       auth: { token },
       autoConnect: false,
       transports: ['websocket'],
+      reconnectionAttempts: 3,
+      reconnectionDelay: 1000,
+    })
+
+    // Suppress connection errors in console
+    socket.on('connect_error', (err) => {
+      // Silently handle connection errors to avoid console warnings
+      console.debug('Socket connection error:', err.message)
     })
   }
 

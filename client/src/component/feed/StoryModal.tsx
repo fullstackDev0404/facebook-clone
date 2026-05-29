@@ -1,7 +1,7 @@
 "use client"
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { X, Trash2 } from 'lucide-react'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { avatarSrc } from '@/component/feed/feedUtils'
 import { storiesApi } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
@@ -126,9 +126,11 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange, onStoryDeleted }:
       <DialogContent
         showCloseButton={false}
         className="p-0 border-0 bg-black/90 shadow-none max-w-none w-screen h-screen rounded-none flex items-center justify-center"
+        aria-describedby="story-description"
       >
         {/* Hidden title for accessibility */}
         <DialogTitle className="sr-only">{authorName}&apos;s story</DialogTitle>
+        <DialogDescription id="story-description" className="sr-only">Viewing {authorName}&apos;s story</DialogDescription>
 
         {/* Story card — fixed phone-like dimensions */}
         <div

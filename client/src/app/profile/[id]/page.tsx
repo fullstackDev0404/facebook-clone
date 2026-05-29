@@ -117,13 +117,13 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
 
         {/* ── Block dialog ── */}
         <Dialog open={blockOpen} onOpenChange={setBlockOpen}>
-          <DialogContent showCloseButton={false} className="max-w-sm">
+          <DialogContent showCloseButton={false} className="max-w-sm" aria-describedby="block-profile-description">
             <DialogHeader>
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-1">
                 <UserX className="w-6 h-6 text-red-500" />
               </div>
               <DialogTitle className="text-center text-[17px]">Block {profileName}?</DialogTitle>
-              <DialogDescription className="text-center text-[14px]">
+              <DialogDescription id="block-profile-description" className="text-center text-[14px]">
                 You won&apos;t see posts from {profileName} anymore. They won&apos;t be able to see your posts or message you.
               </DialogDescription>
             </DialogHeader>

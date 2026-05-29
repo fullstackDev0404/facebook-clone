@@ -97,10 +97,11 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated }: Props) => {
       <DialogContent
         className="max-w-[430px] overflow-hidden rounded-2xl [&_[data-slot=dialog-overlay]]:bg-black/60"
         showCloseButton
+        aria-describedby="create-story-description"
       >
         <DialogHeader className="border-b border-[#ced0d4] dark:border-[#3e4042] pb-3">
           <DialogTitle className="text-center text-xl font-bold text-[#050505] dark:text-white">Create Story</DialogTitle>
-          <DialogDescription className="text-center text-[#65676b]">Share a moment with your friends</DialogDescription>
+          <DialogDescription id="create-story-description" className="text-center text-[#65676b]">Share a moment with your friends</DialogDescription>
         </DialogHeader>
 
         {/* Mode Toggle */}

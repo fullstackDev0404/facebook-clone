@@ -214,3 +214,83 @@
 {"timestamp":"00:41:31.026","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
 {"timestamp":"00:41:31.026","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
 {"timestamp":"00:41:31.026","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"00:48:21.102","source":"Server","level":"LOG","message":"✓ Compiled in 167ms"}
+{"timestamp":"01:50:15.898","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:27:23.460","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:30:18.647","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:30:18.647","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:30:18.649","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:30:18.651","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:30:18.652","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:30:18.652","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:30:24.082","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:30:24.082","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:30:24.083","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:30:24.083","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:30:24.084","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:30:24.084","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:40:04.952","source":"Server","level":"LOG","message":"✓ Compiled in 642ms"}
+{"timestamp":"02:40:05.608","source":"Server","level":"LOG","message":"✓ Compiled in 283ms"}
+{"timestamp":"02:40:16.132","source":"Server","level":"LOG","message":"✓ Compiled in 120ms"}
+{"timestamp":"02:40:24.669","source":"Server","level":"LOG","message":"✓ Compiled in 108ms"}
+{"timestamp":"02:40:30.614","source":"Server","level":"LOG","message":"✓ Compiled in 196ms"}
+{"timestamp":"02:40:36.462","source":"Server","level":"LOG","message":"✓ Compiled in 109ms"}
+{"timestamp":"02:41:07.381","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:41:09.399","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:41:09.399","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:41:09.399","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:41:09.400","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:41:09.400","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:41:09.400","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:44:11.220","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:44:11.220","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:44:11.221","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:44:11.221","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:44:11.221","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:44:11.221","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:47:11.052","source":"Server","level":"LOG","message":"✓ Compiled in 203ms"}
+{"timestamp":"02:47:25.925","source":"Server","level":"LOG","message":"✓ Compiled in 128ms"}
+{"timestamp":"02:47:33.922","source":"Server","level":"LOG","message":"✓ Compiled in 77ms"}
+{"timestamp":"02:47:40.251","source":"Server","level":"LOG","message":"✓ Compiled in 73ms"}
+{"timestamp":"02:47:41.667","source":"Server","level":"LOG","message":"✓ Compiled in 74ms"}
+{"timestamp":"02:47:43.073","source":"Server","level":"LOG","message":"✓ Compiled in 72ms"}
+{"timestamp":"02:47:52.439","source":"Server","level":"LOG","message":"✓ Compiled in 68ms"}
+{"timestamp":"02:49:40.664","source":"Server","level":"LOG","message":"✓ Compiled in 74ms"}
+{"timestamp":"02:49:44.370","source":"Server","level":"LOG","message":"✓ Compiled in 49ms"}
+{"timestamp":"02:49:45.473","source":"Server","level":"LOG","message":"✓ Compiled in 44ms"}
+{"timestamp":"02:49:46.640","source":"Server","level":"LOG","message":"✓ Compiled in 106ms"}
+{"timestamp":"02:49:48.059","source":"Server","level":"LOG","message":"✓ Compiled in 53ms"}
+{"timestamp":"02:49:49.082","source":"Server","level":"LOG","message":"✓ Compiled in 93ms"}
+{"timestamp":"02:49:53.791","source":"Server","level":"LOG","message":"✓ Compiled in 41ms"}
+{"timestamp":"02:49:56.471","source":"Server","level":"LOG","message":"✓ Compiled in 489ms"}
+{"timestamp":"02:49:58.656","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:50:48.485","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"02:55:30.471","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:55:30.471","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:55:30.472","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"02:55:30.472","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"02:55:30.472","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:55:30.472","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"02:55:51.704","source":"Server","level":"LOG","message":"✓ Compiled in 96ms"}
+{"timestamp":"02:55:53.418","source":"Server","level":"LOG","message":"✓ Compiled in 77ms"}
+{"timestamp":"02:55:55.069","source":"Server","level":"LOG","message":"✓ Compiled in 86ms"}
+{"timestamp":"02:55:56.480","source":"Server","level":"LOG","message":"✓ Compiled in 65ms"}
+{"timestamp":"02:56:05.470","source":"Server","level":"LOG","message":"✓ Compiled in 72ms"}
+{"timestamp":"02:56:11.911","source":"Server","level":"LOG","message":"✓ Compiled in 85ms"}
+{"timestamp":"03:06:32.814","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:06:34.710","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"03:06:34.710","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"03:06:34.711","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"03:06:34.711","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"03:06:34.711","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"03:06:34.711","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"03:07:22.915","source":"Server","level":"LOG","message":"✓ Compiled in 149ms"}
+{"timestamp":"03:07:28.819","source":"Server","level":"LOG","message":"✓ Compiled in 87ms"}
+{"timestamp":"03:07:41.957","source":"Server","level":"LOG","message":"✓ Compiled in 50ms"}
+{"timestamp":"03:07:47.715","source":"Server","level":"LOG","message":"✓ Compiled in 104ms"}
+{"timestamp":"03:07:54.538","source":"Server","level":"LOG","message":"✓ Compiled in 88ms"}
+{"timestamp":"03:08:03.540","source":"Server","level":"LOG","message":"✓ Compiled in 56ms"}
+{"timestamp":"03:08:10.569","source":"Server","level":"LOG","message":"✓ Compiled in 78ms"}
+{"timestamp":"03:08:21.494","source":"Server","level":"LOG","message":"✓ Compiled in 54ms"}
+{"timestamp":"03:08:27.090","source":"Server","level":"LOG","message":"✓ Compiled in 75ms"}
+{"timestamp":"03:47:03.551","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}

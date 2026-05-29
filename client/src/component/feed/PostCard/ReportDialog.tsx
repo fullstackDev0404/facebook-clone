@@ -49,13 +49,13 @@ const ReportDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm" aria-describedby="report-description">
         <DialogHeader>
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-orange-100 mx-auto mb-1">
             <Flag className="w-6 h-6 text-orange-500" />
           </div>
           <DialogTitle className="text-center text-[17px]">Report post</DialogTitle>
-          <DialogDescription className="text-center text-[14px]">
+          <DialogDescription id="report-description" className="text-center text-[14px]">
             Why are you reporting this post?
           </DialogDescription>
         </DialogHeader>

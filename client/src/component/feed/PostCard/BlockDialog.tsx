@@ -17,13 +17,13 @@ interface Props {
 const BlockDialog = ({ open, onOpenChange, onBlock, blocking, userName }: Props) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-sm">
+      <DialogContent showCloseButton={false} className="max-w-sm" aria-describedby="block-description">
         <DialogHeader>
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-1">
             <UserX className="w-6 h-6 text-red-500" />
           </div>
           <DialogTitle className="text-center text-[17px]">Block user?</DialogTitle>
-          <DialogDescription className="text-center text-[14px]">
+          <DialogDescription id="block-description" className="text-center text-[14px]">
             You won&apos;t see posts from {userName} anymore. They won&apos;t be able to see your posts or message you.
           </DialogDescription>
         </DialogHeader>

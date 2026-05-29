@@ -76,13 +76,13 @@ const BlockedUsersPage = () => {
 
         {/* ── Unblock confirmation dialog ── */}
         <Dialog open={unblockOpen} onOpenChange={setUnblockOpen}>
-          <DialogContent showCloseButton={false} className="max-w-sm">
+          <DialogContent showCloseButton={false} className="max-w-sm" aria-describedby="unblock-description">
             <DialogHeader>
               <div className="flex items-center justify-center w-12 h-12 rounded-full bg-green-100 mx-auto mb-1">
                 <UserCheck className="w-6 h-6 text-green-500" />
               </div>
               <DialogTitle className="text-center text-[17px]">Unblock user?</DialogTitle>
-              <DialogDescription className="text-center text-[14px]">
+              <DialogDescription id="unblock-description" className="text-center text-[14px]">
                 {selectedUser && `${selectedUser.blocked.firstName} ${selectedUser.blocked.lastName}`} will be able to see your posts and message you again.
               </DialogDescription>
             </DialogHeader>

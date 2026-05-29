@@ -254,13 +254,13 @@ const StoriesRow = () => {
       />
 
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent showCloseButton={false} className="max-w-sm">
+        <DialogContent showCloseButton={false} className="max-w-sm" aria-describedby="delete-description">
           <DialogHeader>
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100 mx-auto mb-1">
               <Trash2 className="w-6 h-6 text-red-500" />
             </div>
             <DialogTitle className="text-center text-[17px]">Delete story?</DialogTitle>
-            <DialogDescription className="text-center text-[14px]">
+            <DialogDescription id="delete-description" className="text-center text-[14px]">
               This will permanently remove your story. You can&apos;t undo this.
             </DialogDescription>
           </DialogHeader>
