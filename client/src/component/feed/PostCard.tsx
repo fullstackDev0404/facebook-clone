@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react'
 import { postsApi, moderationApi, blocksApi } from '@/lib/api'
@@ -49,6 +49,7 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
   const [reportDescription, setReportDescription] = useState('')
   const [editImageFile, setEditImageFile] = useState<File | null>(null)
   const [editVideoFile, setEditVideoFile] = useState<File | null>(null)
+  const shareTimerRef                     = useRef<number | null>(null)
 
   const isOwner = user?.id === post.author.id
 
@@ -71,8 +72,21 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
       setShareStatus('Share')
     }
 
-    window.setTimeout(() => setShareStatus('Share'), 1500)
+    // Clear existing timer before setting a new one
+    if (shareTimerRef.current) {
+      clearTimeout(shareTimerRef.current)
+    }
+    shareTimerRef.current = window.setTimeout(() => setShareStatus('Share'), 1500)
   }
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (shareTimerRef.current) {
+        clearTimeout(shareTimerRef.current)
+      }
+    }
+  }, [])
 
   const [reactionCounts, setReactionCounts] = useState<Record<string, number>>(() => {
     const base: Record<string, number> = {}

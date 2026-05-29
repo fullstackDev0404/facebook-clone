@@ -26,6 +26,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
 
     const notifRef   = useRef<HTMLDivElement>(null)
+    const notifTimerRef = useRef<number | null>(null)
 
     // Determine active nav based on current pathname
     const getActiveNav = (): string => {
@@ -81,7 +82,11 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             // increment unread badge (notifications bell) and briefly open the notifications panel as a subtle cue
             setUnreadCount(c => c + 1)
             setNotifOpen(true)
-            setTimeout(() => setNotifOpen(false), 2500)
+            // Clear existing timer before setting a new one
+            if (notifTimerRef.current) {
+                clearTimeout(notifTimerRef.current)
+            }
+            notifTimerRef.current = window.setTimeout(() => setNotifOpen(false), 2500)
         }
 
         const handleMessageNew = (payload: any) => {
@@ -104,6 +109,10 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             socket.off('notification:new', handleNotificationUpdate)
             socket.off('notification:message', handleMessageNotification)
             socket.off('message:new', handleMessageNew)
+            // Cleanup timer
+            if (notifTimerRef.current) {
+                clearTimeout(notifTimerRef.current)
+            }
         }
     }, [])
 
