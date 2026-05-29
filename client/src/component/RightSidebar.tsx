@@ -65,10 +65,10 @@ const ContactsList = () => {
             <div className="flex items-center justify-between mb-2">
                 <p className="text-[11px] font-semibold text-[#8a8d91] uppercase tracking-wider">Contacts</p>
                 <div className="flex items-center gap-0.5">
-                    <button className="p-1.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-full transition-colors" title="Video call">
+                    <button className="p-1.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-full transition-colors" aria-label="Video call">
                         <Video className="w-4 h-4 text-[#65676b] dark:text-[#b0b3b8]" />
                     </button>
-                    <button className="p-1.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-full transition-colors" title="More">
+                    <button className="p-1.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-full transition-colors" aria-label="More options">
                         <MoreHorizontal className="w-4 h-4 text-[#65676b] dark:text-[#b0b3b8]" />
                     </button>
                 </div>
@@ -102,6 +102,7 @@ const ContactsList = () => {
                     <button
                         key={friendshipId}
                         className="flex items-center gap-3 w-full px-2 py-2 rounded-xl hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors text-left group"
+                        aria-label={`Chat with ${friend.firstName} ${friend.lastName}`}
                     >
                         <div className="relative shrink-0">
                              <Avatar className="w-9 h-9">
@@ -192,7 +193,7 @@ const PeopleYouMayKnow = () => {
                                         onClick={() => sendRequest(user.id)}
                                         disabled={state === 'loading'}
                                         className="p-1.5 bg-[#e7f3ff] hover:bg-[#cce4ff] disabled:opacity-50 text-[#1877f2] rounded-full transition-colors"
-                                        title="Add friend"
+                                        aria-label={`Add friend ${user.firstName} ${user.lastName}`}
                                     >
                                         {state === 'loading'
                                             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -202,7 +203,7 @@ const PeopleYouMayKnow = () => {
                                 <button
                                     onClick={() => dismiss(user.id)}
                                     className="p-1.5 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-full transition-colors"
-                                    title="Dismiss"
+                                    aria-label="Dismiss suggestion"
                                 >
                                     <X className="w-3.5 h-3.5 text-[#65676b]" />
                                 </button>

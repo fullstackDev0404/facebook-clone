@@ -10,6 +10,23 @@ const nextConfig = {
   turbopack: {
     root: __dirname,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5001',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'http',
+        hostname: '192.168.2.52',
+        port: '5001',
+        pathname: '/uploads/**',
+      },
+    ],
+    unoptimized: true,
+  },
   async headers() {
     return [
       {

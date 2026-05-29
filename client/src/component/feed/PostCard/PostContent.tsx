@@ -95,7 +95,6 @@ const PostContent = ({
                   width={600}
                   height={400}
                   className="w-full object-cover max-h-80"
-                  unoptimized
                 />
                 <button
                   onClick={removeImage}
@@ -182,7 +181,7 @@ const PostContent = ({
       )}
       {image && (
         <div className="w-full bg-[#f0f2f5] dark:bg-[#1a1a1a] overflow-hidden">
-          <Image src={avatarSrc(image) ?? ''} alt="Post" width={600} height={400} className="w-full object-cover max-h-96" unoptimized />
+          <Image src={avatarSrc(image) ?? ''} alt="Post" width={600} height={400} className="w-full object-cover max-h-96" />
         </div>
       )}
       {video && (

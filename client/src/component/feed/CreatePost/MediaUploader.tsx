@@ -55,7 +55,7 @@ const MediaUploader = forwardRef<MediaUploaderRef, Props>(({ file, preview, isVi
           {isVideo ? (
             <video src={preview} controls className="w-full max-h-72" />
           ) : (
-            <Image src={preview} alt="Preview" width={600} height={400} className="w-full object-cover max-h-72" unoptimized />
+            <Image src={preview} alt="Preview" width={600} height={400} className="w-full object-cover max-h-72" />
           )}
           <button
             onClick={onRemove}

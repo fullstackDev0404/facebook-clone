@@ -158,7 +158,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                     {/* Hamburger — mobile only */}
                     <button onClick={onMenuClick}
                         className="flex md:hidden items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full text-[#050505] dark:text-[#e4e6eb] transition-colors"
-                        title="Menu">
+                        aria-label="Open menu">
                         <Menu className="w-5 h-5" />
                     </button>
 
@@ -166,7 +166,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                     <button
                         onClick={() => router.push('/messages')}
                         className="relative flex items-center justify-center w-10 h-10 bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb] rounded-full transition-colors"
-                        title="Messenger"
+                        aria-label={`Messenger${unreadMessagesCount > 0 ? ` (${unreadMessagesCount} unread)` : ''}`}
                     >
                         <MessageCircle className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
                         {unreadMessagesCount > 0 && (
@@ -183,6 +183,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                             className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
                                 notifOpen ? 'bg-[#e7f3ff] dark:bg-[#263951]' : 'bg-[#f0f2f5] dark:bg-[#3a3b3c] hover:bg-[#e4e6eb]'
                             }`}
+                            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
                         >
                             <Bell className="w-5 h-5 text-[#050505] dark:text-[#e4e6eb]" />
                             {unreadCount > 0 && (
@@ -210,6 +211,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                             className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
                                 profileOpen ? 'bg-[#e7f3ff] dark:bg-[#263951]' : 'hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
                             }`}
+                            aria-label="Profile menu"
                         >
                         <Avatar className="w-9 h-9">
                             <AvatarImage src={headerAvatarSrc} className="" />
