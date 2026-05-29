@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { friendsApi } from '@/lib/api'
 import { connectSocket } from '@/lib/socket'
 import type { Author } from '@/types'
+import { toast } from 'sonner'
 
 interface Props {
   id: string
@@ -46,7 +47,16 @@ const FriendRequestCard = ({ id, sender, mutualCount = 0, onRespond }: Props) =>
       await friendsApi.respond(id, action)
       setDone(action === 'accept' ? 'accepted' : 'rejected')
       onRespond?.(id, action)
-    } catch { /* silent */ } finally { setActing(null) }
+      if (action === 'accept') {
+        toast.success(`You and ${sender.firstName} are now friends!`)
+      } else {
+        toast.info('Friend request deleted')
+      }
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to respond to friend request'
+      toast.error(errorMessage)
+      console.error('Friend request response error:', err)
+    } finally { setActing(null) }
   }
 
   if (done) return (

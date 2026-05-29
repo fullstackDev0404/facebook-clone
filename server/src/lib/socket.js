@@ -137,4 +137,17 @@ const getUserConnections = (userId) => {
   return userConnections.get(userId)?.size || 0
 }
 
-module.exports = { initSocket, getIo, getUserConnections }
+const emitNotificationCount = async (userId) => {
+  try {
+    const unreadCount = await prisma.notification.count({
+      where: { userId, read: false }
+    })
+    io.to(userId).emit('notification:count', { unreadCount })
+    return true
+  } catch (err) {
+    logger.error({ event: 'notification:count:error', userId, error: err.message })
+    return false
+  }
+}
+
+module.exports = { initSocket, getIo, getUserConnections, emitNotificationCount }

@@ -70,7 +70,7 @@ const LiveInsights = () => {
         <div>
           <p className="text-[13px] uppercase tracking-[0.22em] text-[#65676b] dark:text-[#b0b3b8]">Live insights</p>
           <h2 className="mt-1 text-[20px] font-semibold text-[#050505] dark:text-[#e4e6eb]">Realtime site health</h2>
-          <p className="mt-2 max-w-2xl text-[14px] text-[#65676b] dark:text-[#b0b3b8]">
+          <p className="mt-2 max-w-4xl text-[14px] text-[#65676b] dark:text-[#b0b3b8]">
             Live charting, online user count, signups, and notification status update automatically.
           </p>
         </div>

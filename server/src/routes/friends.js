@@ -4,6 +4,7 @@ const {
   sendRequest,
   respondToRequest,
   removeFriend,
+  clearRejectedRequest,
   getPendingRequests,
   getFriends,
   getSuggestions,
@@ -29,5 +30,8 @@ router.get('/', auth, getFriends)
 
 // DELETE /api/friends/:id               — unfriend or cancel request
 router.delete('/:id', auth, removeFriend)
+
+// DELETE /api/friends/rejected/:id      — clear a rejected request (Option 3)
+router.delete('/rejected/:id', auth, clearRejectedRequest)
 
 module.exports = router

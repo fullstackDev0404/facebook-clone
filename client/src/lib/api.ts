@@ -144,11 +144,26 @@ export { MEDIA_BASE_URL }
 // ─── Friends ──────────────────────────────────────────────────────────────────
 
 export const friendsApi = {
-  sendRequest: (receiverId: string) =>
-    request<{ friendship: FriendshipRecord }>('/friends/request', {
+  sendRequest: async (receiverId: string) => {
+    const token = getToken()
+    const res = await fetch(`${API_BASE_URL}/friends/request`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       method: 'POST',
       body: JSON.stringify({ receiverId }),
-    }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      // For previously rejected requests, return a special response instead of throwing
+      if (data.error === 'Request was previously rejected' || data.error?.includes('previously rejected')) {
+        return { previouslyRejected: true, error: data.error, cooldownRemaining: data.cooldownRemaining, friendshipId: data.friendshipId } as any
+      }
+      throw new ApiError(data.error || 'Something went wrong', res.status)
+    }
+    return data as { friendship: FriendshipRecord }
+  },
 
   respond: (id: string, action: 'accept' | 'reject') =>
     request<{ friendship: FriendshipRecord }>(`/friends/request/${id}`, {
@@ -158,6 +173,9 @@ export const friendsApi = {
 
   remove: (id: string) =>
     request<{ message: string }>(`/friends/${id}`, { method: 'DELETE' }),
+
+  clearRejected: (id: string) =>
+    request<{ message: string }>(`/friends/rejected/${id}`, { method: 'DELETE' }),
 
   getPendingRequests: () =>
     request<{ requests: PendingRequest[] }>('/friends/requests'),

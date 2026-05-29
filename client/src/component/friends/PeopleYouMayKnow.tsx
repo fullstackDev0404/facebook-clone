@@ -59,9 +59,13 @@ const PeopleYouMayKnow = () => {
   const sendRequest = async (id: string) => {
     setStates(s => ({ ...s, [id]: 'loading' }))
     try {
-      await friendsApi.sendRequest(id)
-      setStates(s => ({ ...s, [id]: 'sent' }))
-    } catch {
+      const result = await friendsApi.sendRequest(id)
+      if ((result as any).previouslyRejected) {
+        setStates(s => ({ ...s, [id]: 'idle' }))
+      } else {
+        setStates(s => ({ ...s, [id]: 'sent' }))
+      }
+    } catch (err: any) {
       setStates(s => ({ ...s, [id]: 'error' }))
     }
   }

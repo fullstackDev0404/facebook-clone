@@ -4,6 +4,7 @@ import { Loader2, UserCheck, UserX } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { friendsApi } from '@/lib/api'
 import type { Author } from '@/types'
+import { toast } from 'sonner'
 
 interface PendingRequest {
   id: string
@@ -42,7 +43,16 @@ const FriendRequests = ({ onCountChange }: Props) => {
         onCountChange?.(next.length)
         return next
       })
-    } catch { /* silent */ } finally { setActing(null) }
+      if (action === 'accept') {
+        toast.success('Friend request accepted!')
+      } else {
+        toast.info('Friend request deleted')
+      }
+    } catch (err: any) {
+      const errorMessage = err?.message || 'Failed to respond to friend request'
+      toast.error(errorMessage)
+      console.error('Friend request response error:', err)
+    } finally { setActing(null) }
   }
 
   if (loading) return (

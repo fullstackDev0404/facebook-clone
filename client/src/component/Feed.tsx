@@ -46,7 +46,7 @@ const Feed = () => {
   }
 
   return (
-    <div className="flex flex-col gap-3 max-w-2xl mx-auto w-full">
+    <div className="flex flex-col gap-3 max-w-4xl mx-auto w-full">
       <StoriesRow />
       <CreatePost onPostCreated={post => setPosts(prev => [post, ...prev])} />
 

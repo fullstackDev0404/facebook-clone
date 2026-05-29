@@ -166,7 +166,7 @@ export default function EditProfilePage() {
     <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
       {/* Header */}
       <div className="bg-white dark:bg-[#242526] border-b border-[#dddfe2] dark:border-[#3e4042] sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
           <button
             onClick={() => router.back()}
             className="p-2 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] rounded-full transition-colors"
@@ -178,7 +178,7 @@ export default function EditProfilePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Message Alert */}
         {message.text && (
           <div className={`mb-6 p-4 rounded-lg ${

@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
     Home, Users, Clock, Bookmark, Flag, ChevronDown,
     Store, Tv, MessageCircle, Gamepad2, CalendarDays, X,
-    BarChart3, Shield, UserX,
+    BarChart3, Shield, Settings,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { avatarSrc } from '@/component/feed/feedUtils'
@@ -16,7 +16,7 @@ const navItems = [
     { icon: Users,        label: 'Friends',     color: '#1877f2', bg: '#e7f3ff', href: '/friends'    },
     { icon: MessageCircle,label: 'Messenger',   color: '#1877f2', bg: '#e7f3ff', href: '/messages'   },
     { icon: BarChart3,    label: 'Analytics',   color: '#1877f2', bg: '#e7f3ff', href: '/analytics'   },
-    { icon: UserX,        label: 'Blocked',     color: '#dc2626', bg: '#fee2e2', href: '/blocked'     },
+    { icon: Settings,     label: 'Settings',    color: '#1877f2', bg: '#e7f3ff', href: '/settings'    },
     { icon: Shield,       label: 'Moderation',  color: '#dc2626', bg: '#fee2e2', href: '/moderation' },
     { icon: Clock,        label: 'Memories',    color: '#e15241', bg: '#fce8e6', href: null          },
     { icon: Bookmark,     label: 'Saved',       color: '#7c3aed', bg: '#ede9fe', href: null          },

@@ -10,14 +10,14 @@ import { blocksApi, Block } from '@/lib/api'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS } from '@/lib/constants'
 import { avatarSrc } from '@/component/feed/feedUtils'
-import { UserCheck, Loader2, UserX } from 'lucide-react'
+import { UserCheck, Loader2, UserX, Settings, Shield, Bell, Lock, Globe } from 'lucide-react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 
-const BlockedUsersPage = () => {
+const SettingsPage = () => {
   const { user } = useAuth()
   const [blockedUsers, setBlockedUsers] = useState<Block[]>([])
   const [loading, setLoading] = useState(true)
@@ -114,13 +114,34 @@ const BlockedUsersPage = () => {
           )}
 
           <main className="flex-1 min-w-0 py-5 px-4 sm:px-6 overflow-y-auto">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto space-y-4">
+              {/* Page Header */}
               <div className="overflow-hidden rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm">
                 <div className="px-5 py-4 border-b border-[#ced0d4] dark:border-[#3e4042]">
-                  <h1 className="text-[24px] font-bold text-[#050505] dark:text-[#e4e6eb]">Blocked Users</h1>
-                  <p className="text-[14px] text-[#65676b] mt-1">
-                    Manage users you've blocked from seeing your content and messaging you.
-                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-[#e7f3ff] flex items-center justify-center">
+                      <Settings className="w-6 h-6 text-[#1877f2]" />
+                    </div>
+                    <div>
+                      <h1 className="text-[24px] font-bold text-[#050505] dark:text-[#e4e6eb]">Settings</h1>
+                      <p className="text-[14px] text-[#65676b]">Manage your account settings and preferences</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Blocked Users Section */}
+              <div className="overflow-hidden rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm">
+                <div className="px-5 py-4 border-b border-[#ced0d4] dark:border-[#3e4042]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#fee2e2] flex items-center justify-center">
+                      <UserX className="w-5 h-5 text-[#dc2626]" />
+                    </div>
+                    <div>
+                      <h2 className="text-[18px] font-bold text-[#050505] dark:text-[#e4e6eb]">Blocked Users</h2>
+                      <p className="text-[13px] text-[#65676b]">Manage users you've blocked from seeing your content</p>
+                    </div>
+                  </div>
                 </div>
 
                 {loading && (
@@ -178,6 +199,58 @@ const BlockedUsersPage = () => {
                   </div>
                 )}
               </div>
+
+              {/* Placeholder for other settings sections */}
+              <div className="overflow-hidden rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm">
+                <div className="px-5 py-4 border-b border-[#ced0d4] dark:border-[#3e4042]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#e7f3ff] flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-[#1877f2]" />
+                    </div>
+                    <div>
+                      <h2 className="text-[18px] font-bold text-[#050505] dark:text-[#e4e6eb]">Privacy</h2>
+                      <p className="text-[13px] text-[#65676b]">Manage your privacy settings</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 text-center text-[#65676b] text-[14px]">
+                  More privacy settings coming soon...
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm">
+                <div className="px-5 py-4 border-b border-[#ced0d4] dark:border-[#3e4042]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#ede9fe] flex items-center justify-center">
+                      <Bell className="w-5 h-5 text-[#7c3aed]" />
+                    </div>
+                    <div>
+                      <h2 className="text-[18px] font-bold text-[#050505] dark:text-[#e4e6eb]">Notifications</h2>
+                      <p className="text-[13px] text-[#65676b]">Manage your notification preferences</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 text-center text-[#65676b] text-[14px]">
+                  More notification settings coming soon...
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm">
+                <div className="px-5 py-4 border-b border-[#ced0d4] dark:border-[#3e4042]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-[#d1fae5] flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-[#059669]" />
+                    </div>
+                    <div>
+                      <h2 className="text-[18px] font-bold text-[#050505] dark:text-[#e4e6eb]">Security</h2>
+                      <p className="text-[13px] text-[#65676b]">Manage your account security</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 text-center text-[#65676b] text-[14px]">
+                  More security settings coming soon...
+                </div>
+              </div>
             </div>
           </main>
 
@@ -189,4 +262,4 @@ const BlockedUsersPage = () => {
   )
 }
 
-export default BlockedUsersPage
+export default SettingsPage

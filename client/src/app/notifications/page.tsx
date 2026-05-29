@@ -124,7 +124,7 @@ const NotificationsPage = () => {
           </div>
 
           <main className="flex-1 min-w-0 py-5 px-4 sm:px-6 overflow-y-auto">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-4xl mx-auto">
               {/* Page header */}
               <div className="flex items-center justify-between mb-4">
                 <h1 className="text-[24px] font-bold text-[#050505] dark:text-[#e4e6eb]">Notifications</h1>

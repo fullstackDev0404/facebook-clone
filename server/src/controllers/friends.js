@@ -34,12 +34,38 @@ const sendRequest = async (req, res, next) => {
     })
 
     if (existing) {
-      const msg = {
-        pending:  'Friend request already sent',
-        accepted: 'Already friends',
-        rejected: 'Request was previously rejected',
-      }[existing.status] ?? 'Friendship already exists'
-      return res.status(409).json({ error: msg, status: existing.status })
+      // Option 2: Allow rejecter to send request back
+      // If current user was the receiver (rejecter) and status is rejected, allow sending new request
+      if (existing.status === 'rejected' && existing.receiverId === senderId) {
+        // Delete the old rejected request and create a new one
+        await prisma.friendship.delete({ where: { id: existing.id } })
+      } 
+      // Option 1: Allow re-sending after 30-day cooldown
+      else if (existing.status === 'rejected' && existing.senderId === senderId) {
+        const rejectionDate = new Date(existing.updatedAt)
+        const cooldownDays = 30
+        const cooldownExpiry = new Date(rejectionDate.getTime() + cooldownDays * 24 * 60 * 60 * 1000)
+        const now = new Date()
+        
+        if (now < cooldownExpiry) {
+          const daysRemaining = Math.ceil((cooldownExpiry - now) / (24 * 60 * 60 * 1000))
+          return res.status(409).json({ 
+            error: `Request was previously rejected. You can send another request in ${daysRemaining} day${daysRemaining > 1 ? 's' : ''}.`,
+            status: existing.status,
+            cooldownRemaining: daysRemaining,
+            friendshipId: existing.id
+          })
+        } else {
+          // Cooldown expired, delete old request and allow new one
+          await prisma.friendship.delete({ where: { id: existing.id } })
+        }
+      } else {
+        const msg = {
+          pending:  'Friend request already sent',
+          accepted: 'Already friends',
+        }[existing.status] ?? 'Friendship already exists'
+        return res.status(409).json({ error: msg, status: existing.status })
+      }
     }
 
     const friendship = await prisma.friendship.create({
@@ -126,14 +152,63 @@ const removeFriend = async (req, res, next) => {
     const { id } = req.params
     const userId = req.user.id
 
-    const friendship = await prisma.friendship.findUnique({ where: { id } })
+    const friendship = await prisma.friendship.findUnique({
+      where: { id },
+      include: {
+        sender:   { select: USER_SELECT },
+        receiver: { select: USER_SELECT },
+      },
+    })
     if (!friendship) return res.status(404).json({ error: 'Friendship not found' })
 
     const isParty = friendship.senderId === userId || friendship.receiverId === userId
     if (!isParty) return res.status(403).json({ error: 'Not authorized' })
 
+    // Determine which user is being removed (the one who didn't initiate the removal)
+    const removedUserId = friendship.senderId === userId ? friendship.receiverId : friendship.senderId
+    const removedUser = friendship.senderId === userId ? friendship.receiver : friendship.sender
+
     await prisma.friendship.delete({ where: { id } })
+
+    // Only send notification if removing an accepted friendship (not canceling a pending request)
+    if (friendship.status === 'accepted') {
+      await prisma.notification.create({
+        data: {
+          type:     'friend_remove',
+          message:  `${req.user.firstName} ${req.user.lastName} removed you from their friends list`,
+          userId:   removedUserId,
+          actorId:  userId,
+          entityId: friendship.id,
+        },
+      })
+
+      await emitNotificationCount(removedUserId).catch(() => {})
+    }
+
     res.json({ message: 'Friendship removed' })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * DELETE /api/friends/rejected/:id
+ * Option 3: Delete a rejected friendship to allow sending a new request.
+ */
+const clearRejectedRequest = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const userId = req.user.id
+
+    const friendship = await prisma.friendship.findUnique({ where: { id } })
+    if (!friendship) return res.status(404).json({ error: 'Friend request not found' })
+
+    // Only the sender can clear their own rejected request
+    if (friendship.senderId !== userId) return res.status(403).json({ error: 'Not authorized' })
+    if (friendship.status !== 'rejected') return res.status(400).json({ error: 'Only rejected requests can be cleared' })
+
+    await prisma.friendship.delete({ where: { id } })
+    res.json({ message: 'Rejected request cleared. You can now send a new friend request.' })
   } catch (err) {
     next(err)
   }
@@ -206,9 +281,13 @@ const getSuggestions = async (req, res, next) => {
   try {
     const userId = req.user.id
 
-    // Get all user IDs already in a friendship with current user
+    // Get user IDs in pending or accepted friendships with current user
+    // Exclude rejected friendships so users can re-send requests
     const existing = await prisma.friendship.findMany({
-      where: { OR: [{ senderId: userId }, { receiverId: userId }] },
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+        status: { in: ['pending', 'accepted'] }
+      },
       select: { senderId: true, receiverId: true },
     })
 
@@ -240,4 +319,4 @@ const getSuggestions = async (req, res, next) => {
   }
 }
 
-module.exports = { sendRequest, respondToRequest, removeFriend, getPendingRequests, getFriends, getSuggestions }
+module.exports = { sendRequest, respondToRequest, removeFriend, clearRejectedRequest, getPendingRequests, getFriends, getSuggestions }

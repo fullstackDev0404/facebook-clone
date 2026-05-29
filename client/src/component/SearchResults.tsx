@@ -30,17 +30,19 @@ const SearchResults = ({ query, onClose }: { query: string; onClose: () => void 
       setLoading(true)
       try {
         const data = await searchApi.global(query, activeTab === 'all' ? 'all' : activeTab)
-        setResults(data)
+        // Filter out the current user from search results
+        const filteredUsers = data.users ? data.users.filter(u => u.id !== user?.id) : []
+        setResults({ ...data, users: filteredUsers })
         
         // Check block status for users
-        if (data.users && user) {
+        if (filteredUsers && user) {
           const blockChecks = await Promise.all(
-            data.users.map(u => blocksApi.checkBlock(u.id).catch(() => ({ isBlocked: false })))
+            filteredUsers.map(u => blocksApi.checkBlock(u.id).catch(() => ({ isBlocked: false })))
           )
           const blockedIds = new Set(
             blockChecks
-              .filter((check, index) => check.isBlocked && data.users![index].id !== user.id)
-              .map((_, index) => data.users![index].id)
+              .filter((check, index) => check.isBlocked && filteredUsers[index].id !== user.id)
+              .map((_, index) => filteredUsers[index].id)
           )
           setBlockedUsers(blockedIds)
         }
