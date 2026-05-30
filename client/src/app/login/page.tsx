@@ -71,7 +71,11 @@ const LoginPage = () => {
 
         {/* Card */}
         <div className="w-full max-w-sm">
-          <div className="bg-white rounded-2xl p-4 shadow-lg flex flex-col gap-3">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="px-6 pt-5 pb-4 border-b border-[#dddfe2]">
+              <h2 className="text-[22px] font-bold text-[#1c1e21]">Log in to Facebook</h2>
+            </div>
+            <div className="px-6 pt-4 pb-4 flex flex-col gap-3">
             {errors.api && (
               <div className="bg-red-50 border border-red-200 text-red-600 text-[13px] px-4 py-3 rounded-xl">{errors.api}</div>
             )}
@@ -101,13 +105,11 @@ const LoginPage = () => {
             <div className="text-center">
               <Link href="/forgot-password" className="text-[#1877f2] text-[14px] font-medium hover:underline">Forgot password?</Link>
             </div>
-            <div className="h-3" />
-            <div className="flex items-center gap-3 my-1">
+            <div className="flex items-center gap-2 my-3">
               <div className="flex-1 h-px bg-[#dddfe2]" />
               <span className="text-[#8a8d91] text-[13px]">or</span>
               <div className="flex-1 h-px bg-[#dddfe2]" />
             </div>
-            <div className="h-2" />
             {mounted && (
               <>
                 <button
@@ -123,7 +125,6 @@ const LoginPage = () => {
                   </svg>
                   Continue with Google
                 </button>
-                <div className="h-2" />
                 <button
                   type="button"
                   onClick={() => authApi.microsoftAuth()}
@@ -140,10 +141,14 @@ const LoginPage = () => {
                 </button>
               </>
             )}
-            <div className="flex justify-center pb-1">
-              <Link href="/signup" className="bg-[#42b72a] hover:bg-[#36a420] text-white font-bold px-6 py-3 rounded-xl text-[15px] transition-all">
+            <div className="flex items-center gap-2 my-2 mt-4">
+              <div className="flex-1 h-px bg-[#dddfe2]" />
+            </div>
+            <div className="text-center">
+              <Link href="/signup" className="text-[#1877f2] text-[14px] font-semibold hover:underline">
                 Create new account
               </Link>
+            </div>
             </div>
           </div>
           <p className="text-center text-[13px] text-[#8a8d91] mt-5">

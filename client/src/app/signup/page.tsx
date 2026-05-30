@@ -153,12 +153,10 @@ const SignupPage = () => {
                 ))}
               </p>
 
-              <div className="flex justify-center pt-1 pb-2">
-                <button type="submit" disabled={loading}
-                  className="bg-[#42b72a] hover:bg-[#36a420] disabled:opacity-60 text-white font-bold px-10 py-2.5 rounded-xl text-[17px] transition-all flex items-center gap-2">
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Up'}
-                </button>
-              </div>
+              <button type="submit" disabled={loading}
+                className="w-full bg-[#1877f2] hover:bg-[#166fe5] disabled:opacity-60 text-white font-bold py-3 rounded-xl text-[17px] transition-all flex items-center justify-center gap-2">
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Up'}
+              </button>
             </form>
 
             <div className="flex items-center gap-2 my-3">
