@@ -13,8 +13,7 @@ registered in Google Cloud Console, otherwise Google will reject the redirect.
 ## Steps to fix in Google Cloud Console
 
 1. Go to: https://console.cloud.google.com/apis/credentials
-2. Click on your OAuth 2.0 Client ID:
-   `your-google-client-id-here`
+2. Click on your OAuth 2.0 Client ID
 3. Under **"Authorized redirect URIs"**, make sure this is added:
    ```
    http://localhost:5001/api/auth/google/callback
@@ -31,8 +30,8 @@ registered in Google Cloud Console, otherwise Google will reject the redirect.
 ## Current .env values (already correct)
 
 ```
-GOOGLE_CLIENT_ID=your-google-client-id-here
-GOOGLE_CLIENT_SECRET=your-google-client-secret-here
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 GOOGLE_CALLBACK_URL=http://localhost:5001/api/auth/google/callback
 CLIENT_URL=http://localhost:3000
 PORT=5001
