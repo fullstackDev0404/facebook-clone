@@ -142,7 +142,7 @@ const emitNotificationCount = async (userId) => {
     const unreadCount = await prisma.notification.count({
       where: { userId, read: false }
     })
-    io.to(userId).emit('notification:count', { unreadCount })
+    io.to(userId).emit('notification:unread_count', { unreadCount })
     return true
   } catch (err) {
     logger.error({ event: 'notification:count:error', userId, error: err.message })

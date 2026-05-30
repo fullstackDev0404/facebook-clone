@@ -1,4 +1,5 @@
 import { Check, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import type { NotificationRecord } from '@/lib/api'
 
 const TYPE_STYLES: Record<string, { emoji: string; bg: string }> = {
@@ -28,10 +29,19 @@ interface Props {
 }
 
 const NotificationItem = ({ n, onRead, onDelete, compact = false }: Props) => {
+  const router = useRouter()
   const style = TYPE_STYLES[n.type] ?? { emoji: '🔔', bg: 'bg-[#65676b]' }
 
+  const handleClick = () => {
+    if (n.type === 'friend_request' || n.type === 'friend_accept') {
+      router.push('/friends?tab=requests')
+    }
+  }
+
   return (
-    <div className={`flex items-start gap-3 rounded-xl transition-colors group cursor-pointer ${
+    <div
+      onClick={handleClick}
+      className={`flex items-start gap-3 rounded-xl transition-colors group cursor-pointer ${
       compact ? 'px-3 py-2.5' : 'px-4 py-3'
     } ${
       n.read

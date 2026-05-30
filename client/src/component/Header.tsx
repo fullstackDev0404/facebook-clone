@@ -27,6 +27,14 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
     const notifRef   = useRef<HTMLDivElement>(null)
     const notifTimerRef = useRef<number | null>(null)
+    const userRef = useRef(user)
+    const pathnameRef = useRef(pathname)
+
+    // Update refs when values change
+    useEffect(() => {
+        userRef.current = user
+        pathnameRef.current = pathname
+    }, [user, pathname])
 
     // Determine active nav based on current pathname
     const getActiveNav = (): string => {
@@ -94,7 +102,7 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             const msg = payload?.message
             if (!msg) return
             // Only increment if current user is the receiver and not already viewing messages
-            if (user && msg.receiver?.id === user.id && pathname !== '/messages') {
+            if (userRef.current && msg.receiver?.id === userRef.current.id && pathnameRef.current !== '/messages') {
                 setUnreadMessagesCount(c => c + 1)
             }
         }

@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { Users, UserPlus, UserCheck, Search, Loader2 } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import ProtectedRoute    from '@/component/ProtectedRoute'
 import Header            from '@/component/Header'
 import LeftSidebar       from '@/component/LeftSidebar'
@@ -9,6 +10,7 @@ import FriendsList       from '@/component/friends/FriendsList'
 import FriendRequestCard from '@/component/friends/FriendRequestCard'
 import FriendSuggestions from '@/component/friends/FriendSuggestions'
 import { friendsApi, searchApi } from '@/lib/api'
+import { connectSocket } from '@/lib/socket'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS } from '@/lib/constants'
 import type { Author } from '@/types'
@@ -232,10 +234,19 @@ const RequestsTab = ({ onCountChange }: { onCountChange: (n: number) => void }) 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 const FriendsPage = () => {
+  const searchParams = useSearchParams()
   const [tab, setTab]               = useState<Tab>('friends')
   const [requestCount, setRequestCount] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const vw = useViewport()
+
+  // Set tab from URL query parameter on mount
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as Tab
+    if (tabParam && ['friends', 'requests', 'suggestions', 'search'].includes(tabParam)) {
+      setTab(tabParam)
+    }
+  }, [searchParams])
 
   const showLeft = vw >= BREAKPOINTS.MOBILE
   const showRight = vw >= BREAKPOINTS.TABLET
@@ -245,6 +256,28 @@ const FriendsPage = () => {
     friendsApi.getPendingRequests()
       .then(d => setRequestCount(d.requests.length))
       .catch(() => {})
+  }, [])
+
+  // Listen for socket updates to friend request count
+  useEffect(() => {
+    const socket = connectSocket()
+    if (!socket) return
+
+    const handleFriendRequest = () => {
+      friendsApi.getPendingRequests()
+        .then(d => setRequestCount(d.requests.length))
+        .catch(() => {})
+    }
+
+    socket.on('friend_request:received', handleFriendRequest)
+    socket.on('friend_request:accepted', handleFriendRequest)
+    socket.on('friend_request:rejected', handleFriendRequest)
+
+    return () => {
+      socket.off('friend_request:received', handleFriendRequest)
+      socket.off('friend_request:accepted', handleFriendRequest)
+      socket.off('friend_request:rejected', handleFriendRequest)
+    }
   }, [])
 
   return (
