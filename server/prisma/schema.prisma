@@ -8,20 +8,23 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  username    String?  @unique
-  phone       String?  @unique
-  password    String
-  firstName   String
-  lastName    String
-  avatar      String?
-  coverPhoto  String?
-  bio         String?
-  dob         DateTime?
-  gender      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                        String    @id @default(cuid())
+  email                     String    @unique
+  username                  String?   @unique
+  phone                     String?   @unique
+  password                  String
+  firstName                 String
+  lastName                  String
+  avatar                    String?
+  coverPhoto                String?
+  bio                       String?
+  dob                       DateTime?
+  gender                    String?
+  emailVerified             Boolean   @default(false)
+  emailVerificationToken    String?   @unique
+  emailVerificationExpires  DateTime?
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
 
   // Relations
   posts            Post[]

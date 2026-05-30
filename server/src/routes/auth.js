@@ -1,11 +1,13 @@
 const router = require('express').Router()
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
 const { z } = require('zod')
 const prisma = require('../lib/prisma')
 const { recordSignup } = require('../lib/socket')
 const { logActivity, ACTIVITY_TYPES } = require('../lib/activityLogger')
 const passport = require('../lib/passport')
+const { sendVerificationEmail } = require('../lib/mailer')
 
 const signToken = (userId) =>
     jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' })
@@ -36,25 +38,35 @@ router.post('/register', async (req, res, next) => {
 
         const hashed = await bcrypt.hash(data.password, 10)
 
+        // Generate email verification token
+        const emailVerificationToken = crypto.randomBytes(32).toString('hex')
+        const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
         const user = await prisma.user.create({
             data: {
                 ...data,
                 password: hashed,
                 dob: data.dob ? new Date(data.dob) : null,
+                emailVerified: false,
+                emailVerificationToken,
+                emailVerificationExpires,
             },
-            select: { id: true, email: true, firstName: true, lastName: true, username: true, avatar: true, bio: true, dob: true, gender: true }
+            select: { id: true, email: true, firstName: true, lastName: true, username: true, avatar: true, bio: true, dob: true, gender: true, emailVerified: true }
         })
 
         const token = signToken(user.id)
         recordSignup().catch(() => {})
-        
+
+        // Send verification email (non-blocking — don't fail registration if email fails)
+        sendVerificationEmail(user.email, user.firstName, emailVerificationToken).catch(() => {})
+
         // Log registration activity
         logActivity(user.id, ACTIVITY_TYPES.REGISTER, 'user', user.id, {
             ip: req.ip,
             userAgent: req.get('user-agent'),
         }).catch(() => {})
-        
-        res.status(201).json({ token, user })
+
+        res.status(201).json({ token, user, emailVerificationSent: true })
     } catch (err) {
         if (err instanceof z.ZodError) {
             return res.status(400).json({ error: err.errors[0].message })
@@ -114,6 +126,59 @@ router.post('/refresh', authMiddleware, (req, res) => {
     }
 })
 
+// ── Email Verification ────────────────────────────────────────────────────────
+router.get('/verify-email', async (req, res, next) => {
+    try {
+        const { token } = req.query
+        if (!token) return res.status(400).json({ error: 'Verification token is required' })
+
+        const user = await prisma.user.findFirst({
+            where: {
+                emailVerificationToken: token,
+                emailVerificationExpires: { gt: new Date() },
+            },
+        })
+
+        if (!user) return res.status(400).json({ error: 'Invalid or expired verification token' })
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                emailVerified: true,
+                emailVerificationToken: null,
+                emailVerificationExpires: null,
+            },
+        })
+
+        res.json({ message: 'Email verified successfully' })
+    } catch (err) {
+        next(err)
+    }
+})
+
+// ── Resend Verification Email ─────────────────────────────────────────────────
+router.post('/resend-verification', authMiddleware, async (req, res, next) => {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+        if (!user) return res.status(404).json({ error: 'User not found' })
+        if (user.emailVerified) return res.status(400).json({ error: 'Email is already verified' })
+
+        const emailVerificationToken = crypto.randomBytes(32).toString('hex')
+        const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000)
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerificationToken, emailVerificationExpires },
+        })
+
+        await sendVerificationEmail(user.email, user.firstName, emailVerificationToken)
+
+        res.json({ message: 'Verification email sent' })
+    } catch (err) {
+        next(err)
+    }
+})
+
 // ── Google OAuth ───────────────────────────────────────────────────────────────
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
@@ -143,6 +208,38 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     })
     router.get('/google/callback', (req, res) => {
         res.status(501).json({ error: 'Google OAuth is not configured' })
+    })
+}
+
+// ── Microsoft OAuth ────────────────────────────────────────────────────────────
+if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+    router.get('/microsoft', passport.authenticate('microsoft', { scope: ['user.read'] }))
+
+    router.get('/microsoft/callback', passport.authenticate('microsoft', { session: false }), (req, res) => {
+        try {
+            const token = signToken(req.user.id)
+            
+            // Log login activity
+            logActivity(req.user.id, ACTIVITY_TYPES.LOGIN, 'user', req.user.id, {
+                ip: req.ip,
+                userAgent: req.get('user-agent'),
+                method: 'microsoft_oauth',
+            }).catch(() => {})
+
+            // Redirect to client with token
+            const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/callback?token=${token}`
+            res.redirect(redirectUrl)
+        } catch (err) {
+            res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+        }
+    })
+} else {
+    // Return 501 for Microsoft auth routes if not configured
+    router.get('/microsoft', (req, res) => {
+        res.status(501).json({ error: 'Microsoft OAuth is not configured' })
+    })
+    router.get('/microsoft/callback', (req, res) => {
+        res.status(501).json({ error: 'Microsoft OAuth is not configured' })
     })
 }
 

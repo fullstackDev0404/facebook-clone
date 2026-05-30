@@ -6,6 +6,7 @@ import RightSidebar  from '@/component/RightSidebar'
 import LiveInsights  from '@/component/LiveInsights'
 import Feed          from '@/component/Feed'
 import ProtectedRoute from '@/component/ProtectedRoute'
+import EmailVerificationBanner from '@/component/EmailVerificationBanner'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS, HEADER_HEIGHT } from '@/lib/constants'
 
@@ -20,6 +21,7 @@ const Homepage = () => {
   return (
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
+        <EmailVerificationBanner />
         <Header onMenuClick={() => setDrawerOpen(o => !o)} />
 
         <div className="flex pt-14 w-full min-h-[calc(100vh-56px)]">

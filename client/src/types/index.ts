@@ -15,6 +15,7 @@ export interface User extends Author {
   bio?: string
   dob?: string
   gender?: string
+  emailVerified?: boolean
 }
 
 export interface PostRecord {

@@ -51,6 +51,16 @@ export const authApi = {
   googleAuth: () => {
     window.location.href = `${API_BASE_URL}/auth/google`
   },
+
+  microsoftAuth: () => {
+    window.location.href = `${API_BASE_URL}/auth/microsoft`
+  },
+
+  verifyEmail: (token: string) =>
+    request<{ message: string }>(`/auth/verify-email?token=${token}`),
+
+  resendVerification: () =>
+    request<{ message: string }>('/auth/resend-verification', { method: 'POST' }),
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
