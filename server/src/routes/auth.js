@@ -5,6 +5,7 @@ const { z } = require('zod')
 const prisma = require('../lib/prisma')
 const { recordSignup } = require('../lib/socket')
 const { logActivity, ACTIVITY_TYPES } = require('../lib/activityLogger')
+const passport = require('../lib/passport')
 
 const signToken = (userId) =>
     jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' })
@@ -112,5 +113,37 @@ router.post('/refresh', authMiddleware, (req, res) => {
         next(err)
     }
 })
+
+// ── Google OAuth ───────────────────────────────────────────────────────────────
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
+
+    router.get('/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
+        try {
+            const token = signToken(req.user.id)
+            
+            // Log login activity
+            logActivity(req.user.id, ACTIVITY_TYPES.LOGIN, 'user', req.user.id, {
+                ip: req.ip,
+                userAgent: req.get('user-agent'),
+                method: 'google_oauth',
+            }).catch(() => {})
+
+            // Redirect to client with token
+            const redirectUrl = `${process.env.CLIENT_URL || 'http://localhost:3000'}/auth/callback?token=${token}`
+            res.redirect(redirectUrl)
+        } catch (err) {
+            res.redirect(`${process.env.CLIENT_URL || 'http://localhost:3000'}/login?error=auth_failed`)
+        }
+    })
+} else {
+    // Return 501 for Google auth routes if not configured
+    router.get('/google', (req, res) => {
+        res.status(501).json({ error: 'Google OAuth is not configured' })
+    })
+    router.get('/google/callback', (req, res) => {
+        res.status(501).json({ error: 'Google OAuth is not configured' })
+    })
+}
 
 module.exports = router

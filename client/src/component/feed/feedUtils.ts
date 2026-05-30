@@ -25,10 +25,15 @@ export const initials = (first: string, last: string): string =>
 /**
  * Build a URL for an avatar / story image.
  * - `null` / undefined → default-avatar SVG data-URI (no network request)
- * - Windows backslashes are normalised to forward slashes
+ * - Full URLs (http/https) are returned as-is (e.g. Google OAuth avatars)
+ * - Windows backslashes are normalised to forward slashes for local paths
  */
 export const avatarSrc = (path: string | null): string => {
   if (!path) return DEFAULT_AVATAR
+  // Already a full URL (Google OAuth, external CDN, etc.) — use as-is
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+    return path
+  }
   const normalized = path.replaceAll('\\', '/')
   return `${MEDIA_BASE_URL}/${normalized}`
 }

@@ -47,6 +47,10 @@ export const authApi = {
 
   me: () =>
     request<{ user: import('@/types').User }>('/auth/me'),
+
+  googleAuth: () => {
+    window.location.href = `${API_BASE_URL}/auth/google`
+  },
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────
