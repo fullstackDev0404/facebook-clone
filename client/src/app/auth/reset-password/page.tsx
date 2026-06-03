@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, ArrowLeft, CheckCircle, XCircle } from 'lucide-react'
 import { authApi } from '@/lib/api'
+import { AuthFooter } from '@/component/auth/AuthLayout'
 
 const ResetPasswordPage = () => {
   const router = useRouter()
@@ -50,11 +51,12 @@ const ResetPasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full relative">
+    <div className="min-h-screen bg-[#f0f2f5] flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full relative">
         <div className="absolute top-4 left-4">
-          <Link href="/login" className="p-2 hover:bg-[#e4e6eb] rounded-full transition-colors">
-            <ArrowLeft className="w-6 h-6 text-[#1c1e21]" />
+          <Link href="/login" className="p-2 rounded-full transition-colors group">
+            <ArrowLeft className="w-6 h-6 text-[#1c1e21] group-hover:text-[#1877f2]" />
           </Link>
         </div>
 
@@ -121,7 +123,9 @@ const ResetPasswordPage = () => {
             </Link>
           </div>
         )}
+        </div>
       </div>
+      <AuthFooter />
     </div>
   )
 }

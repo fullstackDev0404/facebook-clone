@@ -63,8 +63,9 @@ const SignupPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] flex flex-col items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-[#f0f2f5] flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-5">
           <div className="flex items-center gap-1">
             <Image src="/images/facebook-logo.jpg" alt="Facebook" width={40} height={40} className="rounded-full" />
@@ -212,6 +213,7 @@ const SignupPage = () => {
               <Link href="/login" className="text-[#1877f2] text-[14px] font-semibold hover:underline">Already have an account?</Link>
             </div>
           </div>
+        </div>
         </div>
       </div>
       <AuthFooter />

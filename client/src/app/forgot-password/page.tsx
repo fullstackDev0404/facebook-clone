@@ -45,8 +45,9 @@ const ForgotPasswordPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] flex flex-col items-center justify-center px-4">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
+    <div className="min-h-screen bg-[#f0f2f5] flex flex-col">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="bg-white rounded-xl shadow-lg w-full max-w-md">
         {!sent ? (
           <>
             <div className="p-6 border-b border-gray-200">
@@ -98,6 +99,7 @@ const ForgotPasswordPage = () => {
             </div>
           </div>
         )}
+        </div>
       </div>
       <AuthFooter />
     </div>
