@@ -17,6 +17,7 @@ import type { Author } from '@/types'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
+import { avatarSrc } from '@/component/feed/feedUtils'
 
 type Tab = 'friends' | 'requests' | 'suggestions' | 'search'
 
@@ -139,7 +140,7 @@ const SearchTab = () => {
             return (
               <div key={user.id} className="flex items-center gap-3 p-3 bg-white dark:bg-[#242526] rounded-2xl border border-[#ced0d4] dark:border-[#3e4042]">
                 <Avatar className="w-14 h-14 shrink-0">
-                  <AvatarImage src={user.avatar ?? undefined} />
+                  <AvatarImage src={avatarSrc(user.avatar ?? null)} />
                   <AvatarFallback className="bg-[#1877f2] text-white font-bold text-lg">
                     {initials(user)}
                   </AvatarFallback>

@@ -4,12 +4,15 @@ import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { isValidEmailOrPhone, inputCls } from '@/lib/validation'
 import { AuthFooter, FieldError } from '@/component/auth/AuthLayout'
+import { authApi } from '@/lib/api'
 
 const ForgotPasswordPage = () => {
   const [email, setEmail]   = useState('')
   const [error, setError]   = useState('')
   const [sent, setSent]     = useState(false)
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [message, setMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -17,9 +20,28 @@ const ForgotPasswordPage = () => {
     if (!isValidEmailOrPhone(email)) { setError('Enter a valid email address or phone number'); return }
     setError('')
     setLoading(true)
-    await new Promise(r => setTimeout(r, 600))
-    setLoading(false)
-    setSent(true)
+    try {
+      await authApi.forgotPassword(email)
+      setSent(true)
+      setMessage('If an account exists with this email, a password reset link has been sent.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset link')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResend = async () => {
+    if (!email.trim()) return
+    setResending(true)
+    try {
+      await authApi.forgotPassword(email)
+      setMessage('Reset link resent successfully!')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to resend reset link')
+    } finally {
+      setResending(false)
+    }
   }
 
   return (
@@ -60,9 +82,20 @@ const ForgotPasswordPage = () => {
             <p className="text-sm text-gray-500">
               We sent a reset link to <span className="font-semibold text-gray-700">{email}</span>.
             </p>
-            <Link href="/login" className="w-full py-3 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] text-white font-bold text-sm transition-colors text-center block">
-              Back to login
-            </Link>
+            {message && <p className="text-sm text-green-600">{message}</p>}
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <div className="flex flex-col gap-2 w-full">
+              <button
+                onClick={handleResend}
+                disabled={resending}
+                className="w-full py-3 rounded-lg bg-[#1877f2] hover:bg-[#166fe5] disabled:opacity-70 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"
+              >
+                {resending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Resend reset link'}
+              </button>
+              <Link href="/login" className="w-full py-3 rounded-lg bg-[#f0f2f5] hover:bg-[#e4e6eb] text-[#1c1e21] font-bold text-sm transition-colors text-center block">
+                Back to login
+              </Link>
+            </div>
           </div>
         )}
       </div>

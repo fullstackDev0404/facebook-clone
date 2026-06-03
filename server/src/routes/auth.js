@@ -4,10 +4,9 @@ const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const { z } = require('zod')
 const prisma = require('../lib/prisma')
-const { recordSignup } = require('../lib/socket')
 const { logActivity, ACTIVITY_TYPES } = require('../lib/activityLogger')
 const passport = require('../lib/passport')
-const { sendVerificationEmail } = require('../lib/mailer')
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../lib/mailer')
 
 const signToken = (userId) =>
     jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' })
@@ -27,8 +26,21 @@ router.post('/register', async (req, res, next) => {
     try {
         const data = registerSchema.parse(req.body)
 
-        const existing = await prisma.user.findUnique({ where: { email: data.email } })
-        if (existing) return res.status(409).json({ error: 'Email already in use' })
+        // Check if email already exists in users or pending registrations
+        const existingUser = await prisma.user.findUnique({ where: { email: data.email } })
+        if (existingUser) return res.status(409).json({ error: 'Email already in use' })
+
+        const existingPending = await prisma.pendingRegistration.findUnique({ where: { email: data.email } })
+        if (existingPending) {
+            // Email already pending - resend verification email and redirect
+            sendVerificationEmail(data.email, data.firstName, existingPending.emailVerificationToken).catch(() => {})
+            
+            return res.status(200).json({ 
+                message: 'Email already pending verification. A new verification email has been sent.', 
+                emailVerificationSent: true,
+                email: data.email
+            })
+        }
 
         // Check if username is already taken
         if (data.username) {
@@ -42,31 +54,29 @@ router.post('/register', async (req, res, next) => {
         const emailVerificationToken = crypto.randomBytes(32).toString('hex')
         const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
 
-        const user = await prisma.user.create({
+        // Store in pending registrations instead of users
+        await prisma.pendingRegistration.create({
             data: {
-                ...data,
+                email: data.email,
+                username: data.username,
                 password: hashed,
+                firstName: data.firstName,
+                lastName: data.lastName,
                 dob: data.dob ? new Date(data.dob) : null,
-                emailVerified: false,
+                gender: data.gender,
                 emailVerificationToken,
                 emailVerificationExpires,
             },
-            select: { id: true, email: true, firstName: true, lastName: true, username: true, avatar: true, bio: true, dob: true, gender: true, emailVerified: true }
         })
 
-        const token = signToken(user.id)
-        recordSignup().catch(() => {})
-
         // Send verification email (non-blocking — don't fail registration if email fails)
-        sendVerificationEmail(user.email, user.firstName, emailVerificationToken).catch(() => {})
+        sendVerificationEmail(data.email, data.firstName, emailVerificationToken).catch(() => {})
 
-        // Log registration activity
-        logActivity(user.id, ACTIVITY_TYPES.REGISTER, 'user', user.id, {
-            ip: req.ip,
-            userAgent: req.get('user-agent'),
-        }).catch(() => {})
-
-        res.status(201).json({ token, user, emailVerificationSent: true })
+        res.status(201).json({ 
+            message: 'Registration successful. Please verify your email to complete registration.', 
+            emailVerificationSent: true,
+            email: data.email
+        })
     } catch (err) {
         if (err instanceof z.ZodError) {
             return res.status(400).json({ error: err.errors[0].message })
@@ -129,26 +139,56 @@ router.post('/refresh', authMiddleware, (req, res) => {
 // ── Email Verification ────────────────────────────────────────────────────────
 router.get('/verify-email', async (req, res, next) => {
     try {
-        const { token } = req.query
-        if (!token) return res.status(400).json({ error: 'Verification token is required' })
+        const { token: verificationToken } = req.query
+        if (!verificationToken) return res.status(400).json({ error: 'Verification token is required' })
 
-        const user = await prisma.user.findFirst({
+        const pending = await prisma.pendingRegistration.findFirst({
             where: {
-                emailVerificationToken: token,
+                emailVerificationToken: verificationToken,
                 emailVerificationExpires: { gt: new Date() },
             },
         })
 
-        if (!user) return res.status(400).json({ error: 'Invalid or expired verification token' })
+        if (!pending) return res.status(400).json({ error: 'Invalid or expired verification token' })
 
-        await prisma.user.update({
-            where: { id: user.id },
+        // Check if email or username already taken (in case of race condition)
+        const existingUser = await prisma.user.findUnique({ where: { email: pending.email } })
+        if (existingUser) {
+            await prisma.pendingRegistration.delete({ where: { id: pending.id } })
+            return res.status(409).json({ error: 'Email already registered' })
+        }
+
+        if (pending.username) {
+            const existingUsername = await prisma.user.findUnique({ where: { username: pending.username } })
+            if (existingUsername) {
+                await prisma.pendingRegistration.delete({ where: { id: pending.id } })
+                return res.status(409).json({ error: 'Username already taken' })
+            }
+        }
+
+        // Create the user from pending registration
+        const user = await prisma.user.create({
             data: {
+                email: pending.email,
+                username: pending.username,
+                password: pending.password,
+                firstName: pending.firstName,
+                lastName: pending.lastName,
+                dob: pending.dob,
+                gender: pending.gender,
                 emailVerified: true,
-                emailVerificationToken: null,
-                emailVerificationExpires: null,
             },
+            select: { id: true, email: true, firstName: true, lastName: true, username: true, avatar: true, bio: true, dob: true, gender: true }
         })
+
+        // Delete the pending registration
+        await prisma.pendingRegistration.delete({ where: { id: pending.id } })
+
+        // Log registration activity
+        logActivity(user.id, ACTIVITY_TYPES.REGISTER, 'user', user.id, {
+            ip: req.ip,
+            userAgent: req.get('user-agent'),
+        }).catch(() => {})
 
         res.json({ message: 'Email verified successfully' })
     } catch (err) {
@@ -157,23 +197,85 @@ router.get('/verify-email', async (req, res, next) => {
 })
 
 // ── Resend Verification Email ─────────────────────────────────────────────────
-router.post('/resend-verification', authMiddleware, async (req, res, next) => {
+router.post('/resend-verification', async (req, res, next) => {
     try {
-        const user = await prisma.user.findUnique({ where: { id: req.user.id } })
-        if (!user) return res.status(404).json({ error: 'User not found' })
-        if (user.emailVerified) return res.status(400).json({ error: 'Email is already verified' })
+        const { email } = req.body
+        if (!email) return res.status(400).json({ error: 'Email is required' })
+
+        const pending = await prisma.pendingRegistration.findUnique({ where: { email } })
+        if (!pending) return res.status(404).json({ error: 'No pending registration found for this email' })
 
         const emailVerificationToken = crypto.randomBytes(32).toString('hex')
         const emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000)
 
-        await prisma.user.update({
-            where: { id: user.id },
+        await prisma.pendingRegistration.update({
+            where: { id: pending.id },
             data: { emailVerificationToken, emailVerificationExpires },
         })
 
-        await sendVerificationEmail(user.email, user.firstName, emailVerificationToken)
+        await sendVerificationEmail(pending.email, pending.firstName, emailVerificationToken)
 
         res.json({ message: 'Verification email sent' })
+    } catch (err) {
+        next(err)
+    }
+})
+
+// ── Forgot Password ─────────────────────────────────────────────────────────────
+router.post('/forgot-password', async (req, res, next) => {
+    try {
+        const { email } = req.body
+        if (!email) return res.status(400).json({ error: 'Email is required' })
+
+        const user = await prisma.user.findUnique({ where: { email } })
+        if (!user) {
+            // Don't reveal if email exists or not for security
+            return res.json({ message: 'If an account exists with this email, a password reset link has been sent.' })
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex')
+        const resetExpires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { resetToken, resetExpires },
+        })
+
+        await sendPasswordResetEmail(user.email, user.firstName, resetToken).catch(() => {})
+
+        res.json({ message: 'If an account exists with this email, a password reset link has been sent.' })
+    } catch (err) {
+        next(err)
+    }
+})
+
+// ── Reset Password ───────────────────────────────────────────────────────────────
+router.post('/reset-password', async (req, res, next) => {
+    try {
+        const { token, password } = req.body
+        if (!token || !password) return res.status(400).json({ error: 'Token and password are required' })
+
+        const user = await prisma.user.findFirst({
+            where: {
+                resetToken: token,
+                resetExpires: { gt: new Date() },
+            },
+        })
+
+        if (!user) return res.status(400).json({ error: 'Invalid or expired reset token' })
+
+        const hashed = await bcrypt.hash(password, 10)
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashed,
+                resetToken: null,
+                resetExpires: null,
+            },
+        })
+
+        res.json({ message: 'Password reset successfully' })
     } catch (err) {
         next(err)
     }
@@ -183,7 +285,7 @@ router.post('/resend-verification', authMiddleware, async (req, res, next) => {
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
 
-    router.get('/google/callback', passport.authenticate('google', { session: false }), (req, res) => {
+    router.get('/google/callback', passport.authenticate('google', { session: false }), async (req, res) => {
         try {
             const token = signToken(req.user.id)
             
@@ -215,7 +317,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
     router.get('/microsoft', passport.authenticate('microsoft', { scope: ['user.read'] }))
 
-    router.get('/microsoft/callback', passport.authenticate('microsoft', { session: false }), (req, res) => {
+    router.get('/microsoft/callback', passport.authenticate('microsoft', { session: false }), async (req, res) => {
         try {
             const token = signToken(req.user.id)
             

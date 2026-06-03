@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { friendsApi } from '@/lib/api'
 import type { Author } from '@/types'
 import { connectSocket } from '@/lib/socket'
+import { avatarSrc } from '../feed/feedUtils'
 
 interface FriendEntry {
   friendshipId: string
@@ -104,7 +105,7 @@ const FriendsList = () => {
           <div key={friendshipId} className="flex items-center gap-3 p-3 bg-white dark:bg-[#242526] rounded-2xl border border-[#ced0d4] dark:border-[#3e4042] hover:shadow-sm transition-shadow">
 <div className="relative">
                <Avatar className="w-12 h-12 shrink-0">
-                 <AvatarImage src={friend.avatar ?? undefined} className="" />
+                 <AvatarImage src={avatarSrc(friend.avatar ?? null)} className="" />
                  <AvatarFallback className="bg-[#1877f2] text-white font-semibold">
                    {initials(friend)}
                  </AvatarFallback>

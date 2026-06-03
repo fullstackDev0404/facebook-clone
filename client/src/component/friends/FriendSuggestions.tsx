@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { friendsApi } from '@/lib/api'
 import type { Author } from '@/types'
 import { toast } from 'sonner'
+import { avatarSrc } from '../feed/feedUtils'
 
 type RequestState = 'idle' | 'loading' | 'sent' | 'error' | 'rejected'
 
@@ -97,7 +98,7 @@ const FriendSuggestions = () => {
         return (
           <div key={user.id} className="flex flex-col items-center gap-2 p-4 bg-white dark:bg-[#242526] rounded-2xl border border-[#ced0d4] dark:border-[#3e4042]">
             <Avatar className="w-16 h-16">
-              <AvatarImage src={user.avatar ?? undefined} className="" />
+              <AvatarImage src={avatarSrc(user.avatar ?? null)} className="" />
               <AvatarFallback className="bg-[#1877f2] text-white font-bold text-lg">
                 {initials(user)}
               </AvatarFallback>

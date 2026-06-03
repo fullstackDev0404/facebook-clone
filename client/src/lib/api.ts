@@ -40,7 +40,7 @@ export const authApi = {
     }),
 
   register: (fields: Record<string, string>) =>
-    request<{ token: string; user: import('@/types').User }>('/auth/register', {
+    request<{ token: string; user: import('@/types').User; emailVerificationSent?: boolean; email?: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(fields),
     }),
@@ -59,8 +59,23 @@ export const authApi = {
   verifyEmail: (token: string) =>
     request<{ message: string }>(`/auth/verify-email?token=${token}`),
 
-  resendVerification: () =>
-    request<{ message: string }>('/auth/resend-verification', { method: 'POST' }),
+  resendVerification: (email: string) =>
+    request<{ message: string }>('/auth/resend-verification', { 
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  forgotPassword: (email: string) =>
+    request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token: string, password: string) =>
+    request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password }),
+    }),
 }
 
 // ─── Posts ────────────────────────────────────────────────────────────────────

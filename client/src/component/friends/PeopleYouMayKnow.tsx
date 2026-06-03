@@ -5,6 +5,7 @@ import { Loader2, UserPlus, X } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { friendsApi } from '@/lib/api'
 import type { Author } from '@/types'
+import { avatarSrc } from '../feed/feedUtils'
 
 type ReqState = 'idle' | 'loading' | 'sent' | 'error'
 
@@ -91,7 +92,7 @@ const PeopleYouMayKnow = () => {
             <div key={user.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors">
               <div className="relative shrink-0">
                 <Avatar className="w-10 h-10 shrink-0">
-                  <AvatarImage src={user.avatar ?? undefined} className="" />
+                  <AvatarImage src={avatarSrc(user.avatar ?? null)} className="" />
                   <AvatarFallback className="bg-[#1877f2] text-white font-semibold text-sm">
                     {initials(user)}
                   </AvatarFallback>

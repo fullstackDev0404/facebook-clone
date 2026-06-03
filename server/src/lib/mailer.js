@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer')
+const logger = require('./logger')
 
 // Create transporter — uses SMTP env vars (Gmail, Outlook, or any SMTP)
 const createTransporter = () => {
@@ -34,34 +35,56 @@ const sendVerificationEmail = async (to, firstName, token) => {
   const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000'
   const verifyUrl = `${clientUrl}/auth/verify-email?token=${token}`
 
-  const transporter = createTransporter()
-
-  await transporter.sendMail({
-    from: FROM,
+  // Always log the verification URL as a fallback for testing
+  logger.info({ 
+    msg: 'Email verification link generated', 
+    verifyUrl,
     to,
-    subject: 'Verify your Facebook Clone email',
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f0f2f5;border-radius:12px;">
-        <div style="text-align:center;margin-bottom:24px;">
-          <span style="color:#1877f2;font-size:28px;font-weight:bold;">facebook</span>
-        </div>
-        <div style="background:white;border-radius:12px;padding:32px;">
-          <h2 style="color:#1c1e21;margin:0 0 8px;">Hi ${firstName},</h2>
-          <p style="color:#65676b;margin:0 0 24px;">Please verify your email address to complete your registration.</p>
-          <a href="${verifyUrl}"
-             style="display:inline-block;background:#1877f2;color:white;font-weight:bold;padding:12px 32px;border-radius:8px;text-decoration:none;font-size:16px;">
-            Verify Email
-          </a>
-          <p style="color:#8a8d91;font-size:12px;margin:24px 0 0;">
-            This link expires in 24 hours. If you didn't create an account, you can ignore this email.
-          </p>
-          <p style="color:#8a8d91;font-size:11px;margin:8px 0 0;word-break:break-all;">
-            Or copy this link: ${verifyUrl}
-          </p>
-        </div>
-      </div>
-    `,
+    token 
   })
+
+  // In development mode without email config, skip email sending
+  if (process.env.NODE_ENV === 'development' && !process.env.EMAIL_USER) {
+    logger.warn({ msg: 'Email verification skipped (no EMAIL_USER configured)' })
+    return { skipped: true, verifyUrl }
+  }
+
+  try {
+    const transporter = createTransporter()
+
+    await transporter.sendMail({
+      from: FROM,
+      to,
+      subject: 'Verify your Facebook Clone email',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#f0f2f5;border-radius:12px;">
+          <div style="text-align:center;margin-bottom:24px;">
+            <span style="color:#1877f2;font-size:28px;font-weight:bold;">facebook</span>
+          </div>
+          <div style="background:white;border-radius:12px;padding:32px;">
+            <h2 style="color:#1c1e21;margin:0 0 8px;">Hi ${firstName},</h2>
+            <p style="color:#65676b;margin:0 0 24px;">Please verify your email address to complete your registration.</p>
+            <a href="${verifyUrl}"
+               style="display:inline-block;background:#1877f2;color:white;font-weight:bold;padding:12px 32px;border-radius:8px;text-decoration:none;font-size:16px;">
+              Verify Email
+            </a>
+            <p style="color:#8a8d91;font-size:12px;margin:24px 0 0;">
+              This link expires in 24 hours. If you didn't create an account, you can ignore this email.
+            </p>
+            <p style="color:#8a8d91;font-size:11px;margin:8px 0 0;word-break:break-all;">
+              Or copy this link: ${verifyUrl}
+            </p>
+          </div>
+        </div>
+      `,
+    })
+    logger.info({ msg: 'Verification email sent successfully', to })
+    return { sent: true }
+  } catch (error) {
+    logger.error({ msg: 'Failed to send verification email', error: error.message, to })
+    // Always return the verifyUrl so user can manually verify
+    return { error: error.message, verifyUrl }
+  }
 }
 
 /**

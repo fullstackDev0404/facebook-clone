@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Search, MoreHorizontal, Video, Loader2, UserPlus, X, UserSearch } from 'lucide-react'
 import { friendsApi, searchApi } from '@/lib/api'
 import { connectSocket } from '@/lib/socket'
+import { avatarSrc } from './feed/feedUtils'
 import type { Author } from '@/types'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
@@ -108,7 +109,7 @@ const ContactsList = () => {
                     >
                         <div className="relative shrink-0">
                              <Avatar className="w-9 h-9">
-                                 <AvatarImage src={friend.avatar ?? undefined} />
+                                 <AvatarImage src={avatarSrc(friend.avatar ?? null)} />
                                  <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
                                      {getInitials(friend)}
                                  </AvatarFallback>
@@ -232,7 +233,7 @@ const FindFriends = () => {
                         return (
                             <div key={user.id} className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors">
                                 <Avatar className="w-9 h-9 shrink-0">
-                                    <AvatarImage src={user.avatar ?? undefined} />
+                                    <AvatarImage src={avatarSrc(user.avatar ?? null)} />
                                     <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
                                         {getInitials(user)}
                                     </AvatarFallback>
@@ -338,7 +339,7 @@ const PeopleYouMayKnow = () => {
                     return (
                         <div key={user.id} className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c] transition-colors">
                             <Avatar className="w-9 h-9 shrink-0">
-                                <AvatarImage src={user.avatar ?? undefined} />
+                                <AvatarImage src={avatarSrc(user.avatar ?? null)} />
                                 <AvatarFallback className="bg-[#1877f2] text-white text-xs font-bold">
                                     {getInitials(user)}
                                 </AvatarFallback>

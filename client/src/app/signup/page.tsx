@@ -45,9 +45,18 @@ const SignupPage = () => {
     if (Object.keys(errs).length) return
     setLoading(true)
     try {
-      const { token, user } = await authApi.register(fields)
-      login(user, token)
-      router.push('/')
+      const { token, user, emailVerificationSent, email } = await authApi.register(fields)
+      
+      if (emailVerificationSent) {
+        const params = new URLSearchParams({ sent: 'true' })
+        if (email) params.set('email', email)
+        router.push(`/auth/verify-email?${params.toString()}`)
+      } else if (token && user) {
+        login(user, token)
+        router.push('/')
+      } else {
+        router.push('/')
+      }
     } catch (e) {
       setErrors({ api: e instanceof Error ? e.message : 'Registration failed' })
     } finally { setLoading(false) }
