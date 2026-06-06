@@ -38,6 +38,8 @@ export interface Comment {
   createdAt: string
   author: Author
   replies?: Comment[]
+  likesCount?: number
+  userReactionType?: string | null
 }
 
 export interface StoryRecord {

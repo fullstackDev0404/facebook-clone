@@ -139,6 +139,21 @@ export const postsApi = {
       method: 'POST',
       body: JSON.stringify({ content, parentId }),
     }),
+
+  likeComment: (commentId: string, { type = 'like' } = {}) =>
+    request(`/comments/${commentId}/like`, { method: 'POST', body: JSON.stringify({ type }) }),
+
+  unlikeComment: (commentId: string) =>
+    request(`/comments/${commentId}/like`, { method: 'DELETE' }),
+
+  updateComment: (commentId: string, content: string) =>
+    request<{ comment: import('@/types').Comment }>(`/comments/${commentId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ content }),
+    }),
+
+  deleteComment: (commentId: string) =>
+    request(`/comments/${commentId}`, { method: 'DELETE' }),
 }
 
 // ─── Stories ────────────────────────────────────────────────────────────────────

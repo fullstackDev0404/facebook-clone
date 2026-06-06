@@ -30,6 +30,7 @@ model User {
   posts            Post[]
   comments         Comment[]
   likes            Like[]
+  commentLikes     CommentLike[]
   sentRequests     Friendship[]  @relation("SentRequests")
   receivedRequests Friendship[]  @relation("ReceivedRequests")
   sentMessages     Message[]     @relation("SentMessages")
@@ -103,11 +104,13 @@ model Comment {
   postId    String
   parentId  String?  // for nested replies
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  author  User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parent  Comment?  @relation("Replies", fields: [parentId], references: [id])
-  replies Comment[] @relation("Replies")
+  author  User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post    Post         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent  Comment?     @relation("Replies", fields: [parentId], references: [id])
+  replies Comment[]   @relation("Replies")
+  likes   CommentLike[]
 
   @@map("comments")
 }
@@ -124,6 +127,20 @@ model Like {
 
   @@unique([userId, postId]) // one reaction per user per post
   @@map("likes")
+}
+
+model CommentLike {
+  id        String   @id @default(cuid())
+  type      String   @default("like") // like, love, haha, wow, sad, angry
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId]) // one reaction per user per comment
+  @@map("comment_likes")
 }
 
 model Friendship {

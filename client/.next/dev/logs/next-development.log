@@ -1,15 +1,51 @@
-{"timestamp":"00:00:25.613","source":"Server","level":"LOG","message":""}
-{"timestamp":"00:00:27.416","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
-{"timestamp":"00:02:17.871","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
-{"timestamp":"00:09:25.519","source":"Server","level":"LOG","message":"✓ Compiled in 3.6s"}
-{"timestamp":"00:10:00.791","source":"Server","level":"LOG","message":"✓ Compiled in 352ms"}
-{"timestamp":"00:35:05.251","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
-{"timestamp":"00:39:10.376","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
-{"timestamp":"00:41:15.657","source":"Server","level":"LOG","message":"✓ Compiled in 68ms"}
-{"timestamp":"00:41:16.747","source":"Server","level":"LOG","message":"✓ Compiled in 207ms"}
-{"timestamp":"00:41:17.851","source":"Server","level":"LOG","message":"✓ Compiled in 150ms"}
-{"timestamp":"00:41:35.585","source":"Server","level":"LOG","message":"✓ Compiled in 261ms"}
-{"timestamp":"00:42:54.636","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
-{"timestamp":"00:43:25.722","source":"Server","level":"LOG","message":"✓ Compiled in 92ms"}
-{"timestamp":"00:43:33.275","source":"Server","level":"LOG","message":"✓ Compiled in 39ms"}
-{"timestamp":"00:43:40.909","source":"Server","level":"LOG","message":"✓ Compiled in 63ms"}
+{"timestamp":"00:00:15.611","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:06:03.757","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:07:38.860","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:07:44.726","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"00:07:44.726","source":"Browser","level":"WARN","message":"Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}."}
+{"timestamp":"00:07:44.773","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"00:07:44.774","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"00:07:44.778","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\\u001b[39m\""}
+{"timestamp":"00:07:44.778","source":"Browser","level":"WARN","message":"\u001b[33mWarning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.\u001b[39m"}
+{"timestamp":"00:09:17.308","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:09:25.815","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:10:17.648","source":"Server","level":"LOG","message":"✓ Compiled in 358ms"}
+{"timestamp":"00:10:17.652","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./src/lib/api.ts [app-client] (ecmascript) <locals> changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"00:10:17.652","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./src/lib/api.ts [app-client] (ecmascript) <locals> changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"00:10:18.352","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:10:18.377","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"00:12:17.800","source":"Server","level":"LOG","message":"✓ Compiled in 63ms"}
+{"timestamp":"00:12:59.895","source":"Server","level":"LOG","message":"✓ Compiled in 114ms"}
+{"timestamp":"00:13:47.787","source":"Server","level":"LOG","message":"✓ Compiled in 97ms"}
+{"timestamp":"00:14:36.667","source":"Server","level":"LOG","message":"✓ Compiled in 95ms"}
+{"timestamp":"00:15:25.585","source":"Server","level":"LOG","message":"✓ Compiled in 52ms"}
+{"timestamp":"03:29:55.616","source":"Browser","level":"WARN","message":"Image with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"}
+{"timestamp":"03:29:55.620","source":"Browser","level":"WARN","message":"Image with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"}
+{"timestamp":"03:29:56.033","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mImage with src \\\"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\\\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\\\"eager\\\"` property if this image is above the fold.\\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\\u001b[39m\""}
+{"timestamp":"03:29:56.039","source":"Browser","level":"WARN","message":"\u001b[33mImage with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\u001b[39m"}
+{"timestamp":"03:29:56.041","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mImage with src \\\"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\\\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\\\"eager\\\"` property if this image is above the fold.\\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\\u001b[39m\""}
+{"timestamp":"03:29:56.042","source":"Browser","level":"WARN","message":"\u001b[33mImage with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\u001b[39m"}
+{"timestamp":"03:30:19.710","source":"Server","level":"LOG","message":"✓ Compiled in 734ms"}
+{"timestamp":"03:30:19.744","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./src/lib/api.ts [app-client] (ecmascript) <locals> changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"03:30:19.745","source":"Server","level":"WARN","message":"⚠ Fast Refresh had to perform a full reload when ./src/lib/api.ts [app-client] (ecmascript) <locals> changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload"}
+{"timestamp":"03:30:20.712","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:30:20.720","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:30:42.218","source":"Server","level":"LOG","message":"✓ Compiled in 105ms"}
+{"timestamp":"03:30:56.247","source":"Server","level":"LOG","message":"✓ Compiled in 109ms"}
+{"timestamp":"03:31:17.197","source":"Server","level":"LOG","message":"✓ Compiled in 160ms"}
+{"timestamp":"03:31:27.847","source":"Server","level":"LOG","message":"✓ Compiled in 102ms"}
+{"timestamp":"03:31:42.294","source":"Server","level":"LOG","message":"✓ Compiled in 73ms"}
+{"timestamp":"03:31:55.302","source":"Server","level":"LOG","message":"✓ Compiled in 115ms"}
+{"timestamp":"03:32:07.429","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mImage with src \\\"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\\\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\\\"eager\\\"` property if this image is above the fold.\\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\\u001b[39m\""}
+{"timestamp":"03:32:07.429","source":"Browser","level":"WARN","message":"\u001b[33mImage with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\u001b[39m"}
+{"timestamp":"03:32:07.429","source":"Browser","level":"WARN","message":"Image with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"}
+{"timestamp":"03:32:07.443","source":"Server","level":"WARN","message":"[browser] \"\\u001b[33mImage with src \\\"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\\\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\\\"eager\\\"` property if this image is above the fold.\\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\\u001b[39m\""}
+{"timestamp":"03:32:07.443","source":"Browser","level":"WARN","message":"\u001b[33mImage with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading\u001b[39m"}
+{"timestamp":"03:32:07.443","source":"Browser","level":"WARN","message":"Image with src \"http://localhost:5001/uploads/posts/1780507874111-471078285.jpg\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"}
+{"timestamp":"03:32:31.391","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:35:05.396","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:35:29.418","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"03:39:47.232","source":"Server","level":"LOG","message":"✓ Compiled in 203ms"}
+{"timestamp":"03:57:34.444","source":"Server","level":"LOG","message":"✓ Compiled in 156ms"}
+{"timestamp":"04:51:25.586","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"04:51:35.462","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
