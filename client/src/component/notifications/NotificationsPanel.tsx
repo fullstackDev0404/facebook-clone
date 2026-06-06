@@ -8,9 +8,10 @@ import NotificationItem from './NotificationItem'
 interface Props {
   onClose: () => void
   panelRef: React.RefObject<HTMLDivElement | null>
+  onNotificationsRead?: () => void
 }
 
-const NotificationsPanel = ({ onClose, panelRef }: Props) => {
+const NotificationsPanel = ({ onClose, panelRef, onNotificationsRead }: Props) => {
   const router = useRouter()
   const [items, setItems]     = useState<NotificationRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,7 +19,20 @@ const NotificationsPanel = ({ onClose, panelRef }: Props) => {
 
   useEffect(() => {
     notificationsApi.getAll({ limit: 20 })
-      .then(d => setItems(d.notifications))
+      .then(d => {
+        setItems(d.notifications)
+        // Auto-mark all notifications as read when panel is opened
+        if (d.notifications.some(n => !n.read)) {
+          notificationsApi.markAllRead()
+            .then(() => {
+              // Update local state to reflect read status
+              setItems(prev => prev.map(n => ({ ...n, read: true })))
+              // Notify parent component to update unread count
+              onNotificationsRead?.()
+            })
+            .catch(() => {})
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
@@ -71,7 +85,7 @@ const NotificationsPanel = ({ onClose, panelRef }: Props) => {
       </div>
 
       {/* Body */}
-      <div className="max-h-120 overflow-y-auto p-2">
+      <div className="max-h-96 overflow-y-auto p-2">
         {loading && (
           <div className="flex justify-center py-8">
             <Loader2 className="w-6 h-6 animate-spin text-[#1877f2]" />

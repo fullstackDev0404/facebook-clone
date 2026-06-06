@@ -59,7 +59,15 @@ const NotificationsPage = () => {
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
-    fetchPage(1, 'all', true)
+    fetchPage(1, 'all', true).then(() => {
+      // Auto-mark all notifications as read when page loads
+      notificationsApi.markAllRead()
+        .then(() => {
+          // Update local state to reflect read status
+          setItems(prev => prev.map(n => ({ ...n, read: true })))
+        })
+        .catch(() => {})
+    })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFilterChange = (f: Filter) => {

@@ -6,6 +6,7 @@ const logger = require('../lib/logger')
 
 let io
 const userConnections = new Map() // Track connections per user for connection pooling
+const typingUsers = new Map() // Track typing status: Map<receiverId, Map<senderId, timeoutId>>
 
 const initSocket = (server) => {
   io = new Server(server, {
@@ -109,9 +110,116 @@ const initSocket = (server) => {
       }
     })
 
+    // Typing indicator events
+    socket.on('typing', (payload) => {
+      const { receiverId } = payload || {}
+      if (!receiverId || typeof receiverId !== 'string') {
+        logger.warn({ event: 'socket:typing:invalid', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, payload })
+        return
+      }
+      if (receiverId === socket.user.id) {
+        return
+      }
+
+      logger.info({ event: 'socket:typing', socketId: socket.id, userId: socket.user.id, receiverId, reqId: socket.requestId })
+
+      // Clear existing timeout if any
+      if (typingUsers.has(receiverId) && typingUsers.get(receiverId).has(socket.user.id)) {
+        clearTimeout(typingUsers.get(receiverId).get(socket.user.id))
+      }
+
+      // Set up typing status for this receiver
+      if (!typingUsers.has(receiverId)) {
+        typingUsers.set(receiverId, new Map())
+      }
+      typingUsers.get(receiverId).set(socket.user.id, null)
+
+      // Emit typing indicator to receiver
+      io.to(receiverId).emit('user:typing', {
+        senderId: socket.user.id,
+        senderName: `${socket.user.firstName} ${socket.user.lastName}`,
+        senderAvatar: socket.user.avatar,
+      })
+    })
+
+    socket.on('stop_typing', (payload) => {
+      const { receiverId } = payload || {}
+      if (!receiverId || typeof receiverId !== 'string') {
+        logger.warn({ event: 'socket:stop_typing:invalid', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, payload })
+        return
+      }
+      if (receiverId === socket.user.id) {
+        return
+      }
+
+      logger.info({ event: 'socket:stop_typing', socketId: socket.id, userId: socket.user.id, receiverId, reqId: socket.requestId })
+
+      // Clear typing status
+      if (typingUsers.has(receiverId) && typingUsers.get(receiverId).has(socket.user.id)) {
+        const timeoutId = typingUsers.get(receiverId).get(socket.user.id)
+        if (timeoutId) clearTimeout(timeoutId)
+        typingUsers.get(receiverId).delete(socket.user.id)
+
+        // Emit stop typing indicator to receiver
+        io.to(receiverId).emit('user:stop_typing', {
+          senderId: socket.user.id,
+        })
+      }
+    })
+
+    socket.on('mark_messages_read', async (payload, callback) => {
+      const { senderId } = payload || {}
+      if (!senderId || typeof senderId !== 'string') {
+        logger.warn({ event: 'socket:mark_messages_read:invalid', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, payload })
+        return callback?.({ success: false, error: 'senderId is required' })
+      }
+      if (senderId === socket.user.id) {
+        return callback?.({ success: false, error: 'Cannot mark your own messages as read' })
+      }
+
+      logger.info({ event: 'socket:mark_messages_read', socketId: socket.id, userId: socket.user.id, senderId, reqId: socket.requestId })
+
+      try {
+        // Update all unread messages from the sender to the current user
+        const result = await prisma.message.updateMany({
+          where: {
+            senderId: senderId,
+            receiverId: socket.user.id,
+            read: false,
+          },
+          data: {
+            read: true,
+          },
+        })
+
+        // Emit seen status update to the sender so they can update their UI
+        io.to(senderId).emit('message:seen', {
+          senderId: senderId,
+          receiverId: socket.user.id,
+          count: result.count
+        })
+
+        logger.info({ event: 'message:marked_read', socketId: socket.id, userId: socket.user.id, senderId, count: result.count, reqId: socket.requestId })
+        callback?.({ success: true, count: result.count })
+      } catch (err) {
+        logger.error({ event: 'message:mark_read_error', socketId: socket.id, userId: socket.user.id, senderId, error: err.message, reqId: socket.requestId })
+        callback?.({ success: false, error: err.message })
+      }
+    })
+
     socket.on('disconnect', (reason) => {
       clearInterval(tokenCheckInterval)
-      
+
+      // Clean up typing status for this user
+      typingUsers.forEach((sendersMap, receiverId) => {
+        if (sendersMap.has(socket.user.id)) {
+          const timeoutId = sendersMap.get(socket.user.id)
+          if (timeoutId) clearTimeout(timeoutId)
+          sendersMap.delete(socket.user.id)
+          io.to(receiverId).emit('user:stop_typing', { senderId: socket.user.id })
+        }
+      })
+
       // Remove from connection pool
       if (userConnections.has(userId)) {
         userConnections.get(userId).delete(socket)
@@ -119,7 +227,7 @@ const initSocket = (server) => {
           userConnections.delete(userId)
         }
       }
-      
+
       logger.info({ event: 'socket:disconnected', socketId: socket.id, userId: socket.user.id, reqId: socket.requestId, reason, remainingConnections: userConnections.get(userId)?.size })
       socket.leave(socket.user.id)
     })

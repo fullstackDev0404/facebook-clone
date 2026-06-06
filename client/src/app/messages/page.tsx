@@ -6,11 +6,12 @@ import LeftSidebar from '@/component/LeftSidebar'
 import RightSidebar from '@/component/RightSidebar'
 import ProtectedRoute from '@/component/ProtectedRoute'
 import { useAuth } from '@/context/AuthContext'
-import { friendsApi, messagesApi, type FriendEntry, type MessageRecord } from '@/lib/api'
+import { friendsApi, messagesApi, notificationsApi, type FriendEntry, type MessageRecord } from '@/lib/api'
 import { connectSocket, disconnectSocket } from '@/lib/socket'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS } from '@/lib/constants'
 import { avatarSrc } from '@/component/feed/feedUtils'
+import { Check } from 'lucide-react'
 
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
@@ -26,9 +27,13 @@ const MessagesPage = () => {
   const [socketConnected, setSocketConnected] = useState(false)
   const [error, setError] = useState('')
   const [chatError, setChatError] = useState('')
+  const [typingUser, setTypingUser] = useState<{ senderId: string; senderName: string; senderAvatar: string | null } | null>(null)
   const chatEndRef = useRef<HTMLDivElement | null>(null)
   const selectedContactRef = useRef<string | null>(null)
   const socketRef = useRef<any>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const messageRefs = useRef<Map<string, HTMLElement>>(new Map())
+  const observerRef = useRef<IntersectionObserver | null>(null)
 
   const vw = useViewport()
   const showLeft = vw >= BREAKPOINTS.MOBILE
@@ -64,19 +69,46 @@ const MessagesPage = () => {
     if (!selectedContact) {
       setMessages([])
       setLoading(false)
+      setTypingUser(null)
       return
     }
 
     setLoading(true)
     setChatError('')
+    setTypingUser(null)
     messagesApi.getChatHistory(selectedContact.friend.id)
-      .then((data) => setMessages(data.conversation.messages))
+      .then((data) => {
+        setMessages(data.conversation.messages)
+        // Mark messages as read when chat is opened via socket for real-time updates
+        const socket = socketRef.current
+        if (socket && socket.connected) {
+          socket.emit('mark_messages_read', { senderId: selectedContact.friend.id }, (response: { success: boolean; error?: string }) => {
+            if (!response?.success) {
+              // Fallback to REST API if socket fails
+              messagesApi.markAsRead(selectedContact.friend.id).catch(() => {})
+            }
+          })
+        } else {
+          // Fallback to REST API if socket not connected
+          messagesApi.markAsRead(selectedContact.friend.id).catch(() => {})
+        }
+      })
       .catch(() => setChatError('Unable to load conversation.'))
       .finally(() => setLoading(false))
   }, [selectedContact])
 
   useEffect(() => {
     if (!user) return
+
+    // Mark all message notifications as read when messages page is opened
+    notificationsApi.getAll({ page: 1, limit: 100, unreadOnly: true })
+      .then((d: any) => {
+        const messageNotifications = d.notifications.filter((n: any) => n.type === 'message')
+        if (messageNotifications.length > 0) {
+          notificationsApi.markAllRead().catch(() => {})
+        }
+      })
+      .catch(() => {})
 
     const socket = connectSocket()
     socketRef.current = socket
@@ -94,23 +126,128 @@ const MessagesPage = () => {
       const incoming = payload.message
       if (incoming.sender.id !== currentContactId && incoming.receiver.id !== currentContactId) return
       setMessages((prev) => (prev.some((item) => item.id === incoming.id) ? prev : [...prev, incoming]))
+      
+      // If the message is from the other user and chat is open, mark it as read if visible
+      if (incoming.sender.id === currentContactId && incoming.receiver.id === user.id && !incoming.read) {
+        // Use setTimeout to ensure the message is rendered before checking visibility
+        setTimeout(() => {
+          const messageElement = messageRefs.current.get(incoming.id)
+          if (messageElement) {
+            const isVisible = isElementInViewport(messageElement)
+            if (isVisible) {
+              const socket = socketRef.current
+              if (socket && socket.connected) {
+                socket.emit('mark_messages_read', { senderId: currentContactId }, (response: { success: boolean }) => {
+                  if (response?.success) {
+                    setMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === incoming.id ? { ...msg, read: true } : msg
+                      )
+                    )
+                  }
+                })
+              }
+            }
+          }
+        }, 100)
+      }
+    }
+    const handleUserTyping = (payload: { senderId: string; senderName: string; senderAvatar: string | null }) => {
+      const currentContactId = selectedContactRef.current
+      if (!currentContactId || payload.senderId !== currentContactId) return
+      setTypingUser(payload)
+    }
+    const handleUserStopTyping = (payload: { senderId: string }) => {
+      const currentContactId = selectedContactRef.current
+      if (!currentContactId || payload.senderId !== currentContactId) return
+      setTypingUser(null)
+    }
+    const handleMessageSeen = (payload: { senderId: string; receiverId: string; count: number }) => {
+      const currentContactId = selectedContactRef.current
+      if (!currentContactId) return
+      // Update messages as read when the other user has seen them
+      // payload.senderId is the person who sent the message (current user)
+      // payload.receiverId is the person who read the message (current contact)
+      if (payload.senderId === user.id && payload.receiverId === currentContactId) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.sender.id === user.id && msg.receiver.id === currentContactId && !msg.read
+              ? { ...msg, read: true }
+              : msg
+          )
+        )
+      }
     }
 
     socket.on('connect', handleConnect)
     socket.on('disconnect', handleDisconnect)
     socket.on('message:new', handleMessage)
+    socket.on('user:typing', handleUserTyping)
+    socket.on('user:stop_typing', handleUserStopTyping)
+    socket.on('message:seen', handleMessageSeen)
 
     return () => {
       socket.off('connect', handleConnect)
       socket.off('disconnect', handleDisconnect)
       socket.off('message:new', handleMessage)
+      socket.off('user:typing', handleUserTyping)
+      socket.off('user:stop_typing', handleUserStopTyping)
+      socket.off('message:seen', handleMessageSeen)
       disconnectSocket()
+      messageRefs.current.clear()
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+        observerRef.current = null
+      }
     }
   }, [user])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // Helper function to check if element is in viewport
+  const isElementInViewport = (el: HTMLElement) => {
+    const rect = el.getBoundingClientRect()
+    return (
+      rect.top >= 0 &&
+      rect.left >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+      rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+    )
+  }
+
+  // Emit typing events when user types
+  useEffect(() => {
+    if (!selectedContact || !socketRef.current?.connected) return
+
+    if (messageText.trim()) {
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      // Emit typing event
+      socketRef.current.emit('typing', { receiverId: selectedContact.friend.id })
+
+      // Set timeout to emit stop_typing after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(() => {
+        socketRef.current?.emit('stop_typing', { receiverId: selectedContact.friend.id })
+      }, 3000)
+    } else {
+      // Emit stop_typing if input is cleared
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      socketRef.current?.emit('stop_typing', { receiverId: selectedContact.friend.id })
+    }
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+    }
+  }, [messageText, selectedContact])
 
   const handleSend = async () => {
     if (!selectedContact) return
@@ -119,6 +256,9 @@ const MessagesPage = () => {
 
     setSending(true)
     setError('')
+
+    // Emit stop_typing when sending a message
+    socketRef.current?.emit('stop_typing', { receiverId: selectedContact.friend.id })
 
     try {
       const socket = socketRef.current
@@ -159,16 +299,16 @@ const MessagesPage = () => {
             </div>
           )}
 
-          <main className="flex-1 min-w-0 py-5 px-4 sm:px-6 overflow-y-auto">
-            <div className="max-w-6xl mx-auto">
-              <div className="rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm overflow-hidden">
-                <div className="flex flex-col md:flex-row md:items-stretch">
-                  <div className="md:w-80 border-b border-[#f0f2f5] dark:border-[#3e4042] md:border-b-0 md:border-r">
-                    <div className="px-5 py-5 border-b border-[#f0f2f5] dark:border-[#3e4042]">
+          <main className="flex-1 min-w-0 py-5 px-4 sm:px-6">
+            <div className="max-w-6xl mx-auto h-[calc(100vh-56px-40px)]">
+              <div className="rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm overflow-hidden h-full">
+                <div className="flex flex-col md:flex-row md:items-stretch h-full">
+                  <div className="md:w-80 border-b border-[#f0f2f5] dark:border-[#3e4042] md:border-b-0 md:border-r flex flex-col">
+                    <div className="px-5 py-5 border-b border-[#f0f2f5] dark:border-[#3e4042] shrink-0">
                       <h2 className="text-[18px] font-semibold text-[#050505]">Chats</h2>
                       <p className="text-[13px] text-[#65676b] mt-1">Select a friend to start chatting.</p>
                     </div>
-                    <div className="max-h-[calc(100vh-56px-180px)] overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto">
                       {contacts.length === 0 ? (
                         <div className="p-6 text-center text-[#65676b]">
                           No friends found. Add friends to start conversations.
@@ -194,7 +334,12 @@ const MessagesPage = () => {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-semibold text-[15px] text-[#050505] truncate">{contact.friend.firstName} {contact.friend.lastName}</p>
-                                  <p className="text-[13px] text-[#65676b] truncate">{contact.since ? `Friends since ${new Date(contact.since).toLocaleDateString()}` : 'Friend'}</p>
+                                  <p className="text-[13px] text-[#65676b] truncate">
+                                    {contact.lastMessage 
+                                      ? (contact.lastMessage.senderId === user.id ? 'You: ' : '') + contact.lastMessage.content
+                                      : (contact.since ? `Friends since ${new Date(contact.since).toLocaleDateString()}` : 'Friend')
+                                    }
+                                  </p>
                                 </div>
                               </button>
                             )
@@ -204,11 +349,13 @@ const MessagesPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex-1 flex flex-col min-h-[480px]">
-                    <div className="px-5 py-5 border-b border-[#f0f2f5] dark:border-[#3e4042] flex items-center justify-between">
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <div className="px-5 py-5 border-b border-[#f0f2f5] dark:border-[#3e4042] flex items-center justify-between shrink-0">
                       <div>
                         <p className="text-[18px] font-semibold text-[#050505]">{selectedContact ? `${selectedContact.friend.firstName} ${selectedContact.friend.lastName}` : 'No chat selected'}</p>
-                        <p className="text-[13px] text-[#65676b]">{socketConnected ? 'Live chat connected' : 'Connecting…'}</p>
+                        <p className="text-[13px] text-[#65676b]">
+                          {typingUser ? `${typingUser.senderName} is typing...` : (socketConnected ? 'Live chat connected' : 'Connecting…')}
+                        </p>
                       </div>
                     </div>
                     <div className="flex-1 overflow-y-auto px-5 py-4 bg-[#f7f8f9] dark:bg-[#18191a]">
@@ -225,10 +372,25 @@ const MessagesPage = () => {
                           ) : messages.map((message) => {
                             const mine = message.sender.id === user.id
                             return (
-                              <div key={message.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
+                              <div 
+                                key={message.id} 
+                                ref={(el) => {
+                                  if (el) messageRefs.current.set(message.id, el)
+                                  else messageRefs.current.delete(message.id)
+                                }}
+                                className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
+                              >
                                 <div className={`max-w-[80%] rounded-3xl px-4 py-3 shadow-sm ${mine ? 'bg-[#1877f2] text-white' : 'bg-white dark:bg-[#242526] text-[#050505]'}`}>
                                   <p className="text-[14px] leading-6 whitespace-pre-wrap">{message.content}</p>
-                                  <p className={`mt-2 text-[11px] ${mine ? 'text-[#dbe9ff]' : 'text-[#6b7280]'}`}>{formatTime(message.createdAt)}</p>
+                                  <div className={`mt-2 flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
+                                    <p className={`text-[11px] ${mine ? 'text-[#dbe9ff]' : 'text-[#6b7280]'}`}>{formatTime(message.createdAt)}</p>
+                                    {mine && (
+                                      <span className="flex items-center relative">
+                                        <Check size={14} className="text-[#dbe9ff]" />
+                                        {message.read && <Check size={14} className="text-[#dbe9ff] -ml-2.5" />}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             )

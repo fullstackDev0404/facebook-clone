@@ -60,19 +60,33 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
     // Fetch unread count on mount
     useEffect(() => {
-        notificationsApi.getAll({ limit: 1 })
-            .then(d => setUnreadCount(d.unreadCount))
-            .catch(() => {})
+        const fetchUnreadCount = () => {
+            notificationsApi.getAll({ limit: 1 })
+                .then(d => setUnreadCount(d.unreadCount))
+                .catch(() => {})
+        }
+        fetchUnreadCount()
+        // Also fetch when window regains focus (user switches back to tab)
+        const handleFocus = () => fetchUnreadCount()
+        window.addEventListener('focus', handleFocus)
+        return () => window.removeEventListener('focus', handleFocus)
     }, [])
 
     // Fetch unread message notifications on mount
     useEffect(() => {
-        notificationsApi.getAll({ page: 1, limit: 100, unreadOnly: true })
-            .then(d => {
-                const messages = d.notifications?.filter((n: any) => n.type === 'message') ?? []
-                setUnreadMessagesCount(messages.length)
-            })
-            .catch(() => {})
+        const fetchUnreadMessages = () => {
+            notificationsApi.getAll({ page: 1, limit: 100, unreadOnly: true })
+                .then(d => {
+                    const messages = d.notifications?.filter((n: any) => n.type === 'message') ?? []
+                    setUnreadMessagesCount(messages.length)
+                })
+                .catch(() => {})
+        }
+        fetchUnreadMessages()
+        // Also fetch when window regains focus (user switches back to tab)
+        const handleFocus = () => fetchUnreadMessages()
+        window.addEventListener('focus', handleFocus)
+        return () => window.removeEventListener('focus', handleFocus)
     }, [])
 
     // Subscribe to socket notification updates
@@ -107,16 +121,31 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             }
         }
 
+        const handleConnect = () => {
+            // Fetch fresh notification counts when socket reconnects
+            notificationsApi.getAll({ limit: 1 })
+                .then(d => setUnreadCount(d.unreadCount))
+                .catch(() => {})
+            notificationsApi.getAll({ page: 1, limit: 100, unreadOnly: true })
+                .then(d => {
+                    const messages = d.notifications?.filter((n: any) => n.type === 'message') ?? []
+                    setUnreadMessagesCount(messages.length)
+                })
+                .catch(() => {})
+        }
+
         socket.on('notification:unread_count', handleNotificationUpdate)
         socket.on('notification:new', handleNotificationUpdate)
         socket.on('notification:message', handleMessageNotification)
         socket.on('message:new', handleMessageNew)
+        socket.on('connect', handleConnect)
 
         return () => {
             socket.off('notification:unread_count', handleNotificationUpdate)
             socket.off('notification:new', handleNotificationUpdate)
             socket.off('notification:message', handleMessageNotification)
             socket.off('message:new', handleMessageNew)
+            socket.off('connect', handleConnect)
             // Cleanup timer
             if (notifTimerRef.current) {
                 clearTimeout(notifTimerRef.current)
@@ -206,6 +235,9 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
                                 panelRef={notifRef}
                                 onClose={() => {
                                     setNotifOpen(false)
+                                    setUnreadCount(0)
+                                }}
+                                onNotificationsRead={() => {
                                     setUnreadCount(0)
                                 }}
                             />

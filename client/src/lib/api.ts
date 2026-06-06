@@ -244,6 +244,11 @@ export const messagesApi = {
       method: 'POST',
       body: JSON.stringify({ receiverId, content }),
     }),
+
+  markAsRead: (userId: string) =>
+    request<{ message: string; count: number }>(`/messages/${userId}/read`, {
+      method: 'PUT',
+    }),
 }
 // ─── Friend types (local to api.ts) ──────────────────────────────────────────
 
@@ -271,6 +276,13 @@ export interface FriendEntry {
   friendshipId: string
   friend: import('@/types').Author
   since: string
+  lastMessage?: {
+    id: string
+    content: string
+    createdAt: string
+    senderId: string
+    read: boolean
+  }
 }
 
 export interface MessageRecord {
@@ -279,6 +291,7 @@ export interface MessageRecord {
   createdAt: string
   senderId: string
   receiverId: string
+  read: boolean
   sender: import('@/types').Author
   receiver: import('@/types').Author
 }

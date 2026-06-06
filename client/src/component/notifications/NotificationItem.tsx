@@ -33,6 +33,10 @@ const NotificationItem = ({ n, onRead, onDelete, compact = false }: Props) => {
   const style = TYPE_STYLES[n.type] ?? { emoji: '🔔', bg: 'bg-[#65676b]' }
 
   const handleClick = () => {
+    // Mark notification as read when clicked
+    if (!n.read) {
+      onRead(n.id)
+    }
     if (n.type === 'friend_request' || n.type === 'friend_accept') {
       router.push('/friends?tab=requests')
     }

@@ -259,15 +259,42 @@ const getFriends = async (req, res, next) => {
     })
 
     // Normalize: always return the "other" user as the friend, excluding blocked users
-    const friends = friendships
-      .map(f => ({
-        friendshipId: f.id,
-        friend: f.senderId === userId ? f.receiver : f.sender,
-        since:  f.updatedAt,
-      }))
-      .filter(f => !blockedIds.has(f.friend.id))
+    const friends = await Promise.all(
+      friendships
+        .map(async f => {
+          const friendId = f.senderId === userId ? f.receiverId : f.senderId
+          const friend = f.senderId === userId ? f.receiver : f.sender
 
-    res.json({ friends })
+          // Get last message between current user and this friend
+          const lastMessage = await prisma.message.findFirst({
+            where: {
+              OR: [
+                { senderId: userId, receiverId: friendId },
+                { senderId: friendId, receiverId: userId },
+              ],
+            },
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              senderId: true,
+              read: true,
+            },
+          })
+
+          return {
+            friendshipId: f.id,
+            friend,
+            since: f.updatedAt,
+            lastMessage,
+          }
+        })
+    )
+
+    const filteredFriends = friends.filter(f => !blockedIds.has(f.friend.id))
+
+    res.json({ friends: filteredFriends })
   } catch (err) {
     next(err)
   }

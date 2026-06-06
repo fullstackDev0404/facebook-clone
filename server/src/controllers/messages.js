@@ -156,4 +156,51 @@ const sendMessage = async (req, res, next) => {
   }
 }
 
-module.exports = { getChatHistory, sendMessage }
+/**
+ * PUT /api/messages/:userId/read
+ * Marks all messages from a specific user as read for the logged-in user.
+ */
+const markMessagesAsRead = async (req, res, next) => {
+  try {
+    const userId = req.user.id
+    const otherUserId = req.params.userId
+
+    if (!otherUserId || typeof otherUserId !== 'string') {
+      return res.status(400).json({ error: 'Invalid user id' })
+    }
+
+    if (userId === otherUserId) {
+      return res.status(400).json({ error: 'Cannot mark messages from yourself' })
+    }
+
+    // Update all unread messages from the other user to the logged-in user
+    const result = await prisma.message.updateMany({
+      where: {
+        senderId: otherUserId,
+        receiverId: userId,
+        read: false,
+      },
+      data: {
+        read: true,
+      },
+    })
+
+    try {
+      const io = getIo()
+      // Emit seen status update to the sender so they can update their UI
+      io.to(otherUserId).emit('message:seen', { 
+        senderId: otherUserId, 
+        receiverId: userId,
+        count: result.count 
+      })
+    } catch (err) {
+      // Socket.io may not be initialized
+    }
+
+    res.json({ message: 'Messages marked as read', count: result.count })
+  } catch (err) {
+    next(err)
+  }
+}
+
+module.exports = { getChatHistory, sendMessage, markMessagesAsRead }
