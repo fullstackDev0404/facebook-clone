@@ -78,7 +78,10 @@ const CommentItem = ({ comment, postId, depth = 0, onReplyAdded, onLikeToggle, o
         await postsApi.likeComment(comment.id)
         onLikeToggle(comment.id, true)
       }
-    } catch { /* silent */ } finally { setLiking(false) }
+    } catch (error) {
+      console.error('Failed to toggle like:', error)
+      toast.error('Failed to update like')
+    } finally { setLiking(false) }
   }
 
   const handleEditSubmit = async () => {

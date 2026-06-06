@@ -5,7 +5,7 @@ const { moderateContent } = require('../lib/contentModeration')
 /**
  * Helper function to recursively fetch nested replies
  */
-const fetchRepliesRecursively = async (commentId, maxDepth = 5, currentDepth = 0) => {
+const fetchRepliesRecursively = async (commentId, userId, maxDepth = 5, currentDepth = 0) => {
     if (currentDepth >= maxDepth) return []
 
     const replies = await prisma.comment.findMany({
@@ -14,13 +14,28 @@ const fetchRepliesRecursively = async (commentId, maxDepth = 5, currentDepth = 0
             author: {
                 select: { id: true, firstName: true, lastName: true, avatar: true },
             },
+            _count: {
+                select: { likes: true }
+            }
         },
         orderBy: { createdAt: 'asc' },
     })
 
-    // Recursively fetch replies for each reply
+    // Get user's reaction for each reply
+    const replyIds = replies.map(r => r.id)
+    const userReactions = replyIds.length > 0 ? await prisma.commentLike.findMany({
+        where: {
+            commentId: { in: replyIds },
+            userId
+        }
+    }) : []
+
+    // Attach likes count and user reaction to each reply
     for (const reply of replies) {
-        reply.replies = await fetchRepliesRecursively(reply.id, maxDepth, currentDepth + 1)
+        reply.likesCount = reply._count.likes
+        reply.userReactionType = userReactions.find(r => r.commentId === reply.id)?.type || null
+        delete reply._count
+        reply.replies = await fetchRepliesRecursively(reply.id, userId, maxDepth, currentDepth + 1)
     }
 
     return replies
@@ -34,6 +49,7 @@ const fetchRepliesRecursively = async (commentId, maxDepth = 5, currentDepth = 0
 const getComments = async (req, res, next) => {
     try {
         const postId = req.params.id
+        const userId = req.user?.id
 
         // Check post exists
         const post = await prisma.post.findUnique({ where: { id: postId } })
@@ -45,13 +61,28 @@ const getComments = async (req, res, next) => {
                 author: {
                     select: { id: true, firstName: true, lastName: true, avatar: true },
                 },
+                _count: {
+                    select: { likes: true }
+                }
             },
             orderBy: { createdAt: 'asc' },
         })
 
-        // Recursively fetch all nested replies for each top-level comment
+        // Get user's reactions for all comments
+        const commentIds = comments.map(c => c.id)
+        const userReactions = commentIds.length > 0 ? await prisma.commentLike.findMany({
+            where: {
+                commentId: { in: commentIds },
+                userId
+            }
+        }) : []
+
+        // Attach likes count and user reaction to each comment
         for (const comment of comments) {
-            comment.replies = await fetchRepliesRecursively(comment.id)
+            comment.likesCount = comment._count.likes
+            comment.userReactionType = userReactions.find(r => r.commentId === comment.id)?.type || null
+            delete comment._count
+            comment.replies = await fetchRepliesRecursively(comment.id, userId)
         }
 
         res.json({ comments })
