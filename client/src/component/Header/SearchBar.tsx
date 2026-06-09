@@ -13,7 +13,7 @@ const SearchBar = ({ onNavigate }: Props) => {
 
   return (
     <div className="relative">
-      <div className={`flex items-center gap-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] rounded-full px-3 py-2 transition-all duration-200 ${searchFocused ? 'w-52' : 'w-44'}`}>
+      <div className={`flex items-center gap-2 bg-[#f0f2f5] dark:bg-[#3a3b3c] rounded-full px-3 py-2 transition-all duration-200 ${searchFocused ? 'w-48 sm:w-52' : 'w-36 sm:w-44'}`}>
         <Search className="w-4 h-4 text-[#65676b] shrink-0" />
         <input
           type="text"

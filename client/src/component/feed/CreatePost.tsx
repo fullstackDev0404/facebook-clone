@@ -192,7 +192,7 @@ const CreatePost = ({ onPostCreated }: Props) => {
       {error && <p className="text-xs text-red-500 mb-2 px-1">{error}</p>}
 
       <div className="border-t border-[#ced0d4] dark:border-[#3e4042] pt-2 mt-1 flex items-center justify-between">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-wrap">
           <PrivacySelector value={privacy} onChange={setPrivacy} />
           {[
             {
@@ -220,7 +220,7 @@ const CreatePost = ({ onPostCreated }: Props) => {
             <button
               key={label}
               onClick={onClick}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-colors ${
+              className={`flex items-center gap-2 px-2 sm:px-3 py-2 rounded-xl transition-colors ${
                 active ? 'bg-[#e7f3ff]' : 'hover:bg-[#f0f2f5] dark:hover:bg-[#3a3b3c]'
               }`}
             >

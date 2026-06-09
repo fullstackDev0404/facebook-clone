@@ -71,7 +71,7 @@ const SearchResults = ({ query, onClose }: { query: string; onClose: () => void 
   if (!query.trim()) return null
 
   return (
-    <div className="absolute top-full left-[-50px] right-[-50px] mt-2 bg-white dark:bg-[#242526] rounded-xl shadow-2xl z-50 overflow-hidden max-h-[500px] flex flex-col">
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#242526] rounded-xl shadow-2xl z-50 overflow-hidden max-h-[500px] flex flex-col w-full">
       {/* Tabs */}
       <div className="flex border-b border-[#f0f2f5] dark:border-[#3e4042]">
         {(['all', 'people', 'posts'] as const).map((tab) => (
