@@ -16,6 +16,7 @@ export interface User extends Author {
   dob?: string
   gender?: string
   emailVerified?: boolean
+  coverPhoto?: string | null
 }
 
 export interface PostRecord {

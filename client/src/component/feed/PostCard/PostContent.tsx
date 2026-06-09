@@ -17,6 +17,7 @@ interface Props {
   onCancelEdit: () => void
   saving: boolean
   editError: string
+  highlightQuery?: string
 }
 
 const PostContent = ({
@@ -32,6 +33,7 @@ const PostContent = ({
   onCancelEdit,
   saving,
   editError,
+  highlightQuery,
 }: Props) => {
   const [previewImage, setPreviewImage] = useState<string | null>(image ? avatarSrc(image) : null)
   const [previewVideo, setPreviewVideo] = useState<string | null>(video ? avatarSrc(video) : null)
@@ -174,10 +176,27 @@ const PostContent = ({
     )
   }
 
+  const highlightText = (text: string, query: string) => {
+    if (!query.trim()) return text
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+    const parts = text.split(regex)
+    return parts.map((part, i) => 
+      regex.test(part) ? (
+        <mark key={i} className="bg-yellow-200 dark:bg-yellow-600 px-1 rounded">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    )
+  }
+
   return (
     <>
       {content && (
-        <p className="px-4 pb-4 text-[15px] text-[#050505] dark:text-[#e4e6eb] leading-relaxed">{content}</p>
+        <p className="px-4 pb-4 text-[15px] text-[#050505] dark:text-[#e4e6eb] leading-relaxed">
+          {highlightQuery ? highlightText(content, highlightQuery) : content}
+        </p>
       )}
       {image && (
         <div className="w-full bg-[#f0f2f5] dark:bg-[#1a1a1a] overflow-hidden">

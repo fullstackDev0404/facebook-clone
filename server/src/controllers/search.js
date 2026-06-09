@@ -134,7 +134,7 @@ const searchPosts = async (req, res, next) => {
 }
 
 /**
- * GET /api/search?q=query&type=all|users|posts&limit=10
+ * GET /api/search?q=query&type=all|people|posts&limit=10
  * Global search - searches both users and posts
  */
 const globalSearch = async (req, res, next) => {
@@ -150,7 +150,7 @@ const globalSearch = async (req, res, next) => {
 
         let results = {}
 
-        if (type === 'all' || type === 'users') {
+        if (type === 'all' || type === 'people') {
             results.users = await prisma.user.findMany({
                 where: {
                     OR: [

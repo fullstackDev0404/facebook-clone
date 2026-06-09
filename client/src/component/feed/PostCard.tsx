@@ -16,9 +16,10 @@ import BlockDialog from './PostCard/BlockDialog'
 interface Props {
   post: PostRecord
   onDeleted?: (id: string) => void
+  highlightQuery?: string
 }
 
-const PostCard = ({ post: initial, onDeleted }: Props) => {
+const PostCard = ({ post: initial, onDeleted, highlightQuery }: Props) => {
   const { user }                          = useAuth()
 
   // Valid reaction types - must be declared before use
@@ -295,6 +296,7 @@ const PostCard = ({ post: initial, onDeleted }: Props) => {
           onCancelEdit={() => { setEditing(false); setEditError(''); setEditImageFile(null); setEditVideoFile(null) }}
           saving={saving}
           editError={editError}
+          highlightQuery={highlightQuery}
         />
 
         {(Object.values(reactionCounts).some(c => c > 0) || commentCount > 0) && (

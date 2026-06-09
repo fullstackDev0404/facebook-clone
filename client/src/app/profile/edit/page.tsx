@@ -24,6 +24,7 @@ export default function EditProfilePage() {
   const router = useRouter()
   const { user, login } = useAuth()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const coverPhotoInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
@@ -37,6 +38,8 @@ export default function EditProfilePage() {
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [coverPhotoPreview, setCoverPhotoPreview] = useState<string | null>(null)
+  const [coverPhotoFile, setCoverPhotoFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
 
@@ -103,6 +106,39 @@ export default function EditProfilePage() {
     }
   }
 
+  const handleCoverPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setMessage({ type: 'error', text: 'Please select an image file' })
+        return
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage({ type: 'error', text: 'Image must be less than 5MB' })
+        return
+      }
+
+      setCoverPhotoFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setCoverPhotoPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+      setMessage({ type: '', text: '' })
+    }
+  }
+
+  const removeCoverPhoto = () => {
+    setCoverPhotoFile(null)
+    setCoverPhotoPreview(null)
+    if (coverPhotoInputRef.current) {
+      coverPhotoInputRef.current.value = ''
+    }
+  }
+
   const handleSave = async () => {
     try {
       setSaving(true)
@@ -125,8 +161,13 @@ export default function EditProfilePage() {
         data.append('avatar', avatarFile)
       }
 
+      // Add cover photo if changed
+      if (coverPhotoFile) {
+        data.append('coverPhoto', coverPhotoFile)
+      }
+
       // Only send if there are actual changes
-      if (data.entries().next().done && !avatarFile) {
+      if (data.entries().next().done && !avatarFile && !coverPhotoFile) {
         setMessage({ type: 'info', text: 'No changes to save' })
         return
       }
@@ -236,6 +277,55 @@ export default function EditProfilePage() {
             type="file"
             accept="image/*"
             onChange={handleAvatarChange}
+            className="hidden"
+          />
+        </div>
+
+        {/* Cover Photo Section */}
+        <div className="bg-white dark:bg-[#242526] rounded-lg p-6 mb-6">
+          <h2 className="text-lg font-bold text-[#050505] dark:text-[#e4e6eb] mb-4">Cover Photo</h2>
+          
+          <div className="relative">
+            {/* Cover Photo Display */}
+            <div className="w-full h-48 bg-[#e4e6eb] dark:bg-[#3a3b3c] rounded-lg overflow-hidden relative">
+              {coverPhotoPreview || user?.coverPhoto ? (
+                <img
+                  src={coverPhotoPreview || avatarSrc(user?.coverPhoto ?? null)}
+                  alt="Cover"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-[#65676b] dark:text-[#b0b3b8]">
+                  No cover photo
+                </div>
+              )}
+              
+              {/* Upload Button */}
+              <button
+                onClick={() => coverPhotoInputRef.current?.click()}
+                className="absolute bottom-4 right-4 px-4 py-2 bg-[#1877f2] text-white rounded-lg hover:bg-[#165ec7] transition-colors shadow-lg flex items-center gap-2"
+              >
+                <Camera className="w-4 h-4" />
+                Change Cover
+              </button>
+            </div>
+
+            {coverPhotoPreview && (
+              <button
+                onClick={removeCoverPhoto}
+                className="mt-3 flex items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors text-[14px] font-medium"
+              >
+                <X className="w-4 h-4" />
+                Remove Cover Photo
+              </button>
+            )}
+          </div>
+
+          <input
+            ref={coverPhotoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleCoverPhotoChange}
             className="hidden"
           />
         </div>

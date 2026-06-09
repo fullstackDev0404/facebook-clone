@@ -2,7 +2,6 @@ const prisma = require('../lib/prisma')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
 const path = require('path')
-const uploadAvatar = require('../lib/uploadAvatar')
 
 // Public profile data
 const getProfile = async (req, res, next) => {
@@ -112,20 +111,55 @@ const getProfile = async (req, res, next) => {
 }
 
 // PUT /api/users/profile
-// Body (multipart/form-data): firstName (optional), lastName (optional), bio (optional), avatar (file, optional)
+// Body (multipart/form-data): firstName, lastName, username, bio, email, dob, gender, avatar (file), coverPhoto (file)
 const updateProfile = async (req, res, next) => {
   try {
     const userId = req.user.id
-    const { firstName, lastName, bio } = req.body
+    const { firstName, lastName, username, bio, email, dob, gender } = req.body
 
     const data = {}
+    
+    // Basic info
     if (typeof firstName === 'string' && firstName.trim().length) data.firstName = firstName.trim()
     if (typeof lastName === 'string' && lastName.trim())   data.lastName  = lastName.trim()
     if (typeof bio === 'string')                           data.bio       = bio.trim()
+    
+    // Username (optional, must be unique)
+    if (typeof username === 'string' && username.trim()) {
+      const existingUsername = await prisma.user.findUnique({ where: { username: username.trim() } })
+      if (existingUsername && existingUsername.id !== userId) {
+        return res.status(400).json({ error: 'Username already taken' })
+      }
+      data.username = username.trim()
+    }
+    
+    // Email (optional, must be unique)
+    if (typeof email === 'string' && email.trim()) {
+      const existingEmail = await prisma.user.findUnique({ where: { email: email.trim() } })
+      if (existingEmail && existingEmail.id !== userId) {
+        return res.status(400).json({ error: 'Email already in use' })
+      }
+      data.email = email.trim()
+    }
+    
+    // Date of birth
+    if (typeof dob === 'string' && dob.trim()) {
+      const dobDate = new Date(dob)
+      if (!isNaN(dobDate.getTime())) {
+        data.dob = dobDate
+      }
+    }
+    
+    // Gender
+    if (typeof gender === 'string' && gender.trim()) {
+      data.gender = gender.trim()
+    }
 
-    if (req.file) {
+    // Avatar upload
+    if (req.files && req.files['avatar'] && req.files['avatar'][0]) {
+      const avatarFile = req.files['avatar'][0]
       // /avatars/* to db — always forward-slashes for browser URLs
-      const avatarPath = uploadAvatar.toUrlPath(path.join('uploads', 'avatars', req.file.filename))
+      const avatarPath = path.join('uploads', 'avatars', avatarFile.filename).replace(/\\/g, '/')
 
       // remove previous avatar file if exists and is local (async)
       const current = await prisma.user.findUnique({ where: { id: userId }, select: { avatar: true } })
@@ -143,7 +177,42 @@ const updateProfile = async (req, res, next) => {
       data.avatar = avatarPath
     }
 
-    const updated = await prisma.user.update({ where: { id: userId }, data, select: { id: true, firstName: true, lastName: true, bio: true, avatar: true, email: true } })
+    // Cover photo upload
+    if (req.files && req.files['coverPhoto'] && req.files['coverPhoto'][0]) {
+      const coverFile = req.files['coverPhoto'][0]
+      const coverPath = path.join('uploads', 'covers', coverFile.filename).replace(/\\/g, '/')
+
+      // remove previous cover photo file if exists and is local (async)
+      const current = await prisma.user.findUnique({ where: { id: userId }, select: { coverPhoto: true } })
+      if (current?.coverPhoto?.startsWith('uploads/')) {
+        const cleanPath = current.coverPhoto.replace(/\\/g, '/')
+        const oldPath   = path.join(process.cwd(), cleanPath)
+        try {
+          await fs.promises.unlink(oldPath)
+        } catch (e) {
+          // ignore errors (file may already be removed)
+        }
+      }
+
+      data.coverPhoto = coverPath
+    }
+
+    const updated = await prisma.user.update({ 
+      where: { id: userId }, 
+      data,
+      select: { 
+        id: true, 
+        firstName: true, 
+        lastName: true, 
+        username: true,
+        bio: true, 
+        avatar: true, 
+        coverPhoto: true,
+        email: true,
+        dob: true,
+        gender: true
+      } 
+    })
 
     res.json({ user: updated })
   } catch (err) {
