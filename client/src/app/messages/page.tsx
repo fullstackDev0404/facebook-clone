@@ -12,12 +12,14 @@ import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS } from '@/lib/constants'
 import { avatarSrc } from '@/component/feed/feedUtils'
 import { Check } from 'lucide-react'
+import { useToast } from '@/hooks/useToast'
 
 const formatTime = (iso: string) =>
   new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
 const MessagesPage = () => {
   const { user } = useAuth()
+  const { success, error: showError } = useToast()
   const [contacts, setContacts] = useState<FriendEntry[]>([])
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null)
   const [messages, setMessages] = useState<MessageRecord[]>([])
@@ -266,7 +268,9 @@ const MessagesPage = () => {
         socket.emit('send_message', { receiverId: selectedContact.friend.id, content }, (response: { success: boolean; error?: string }) => {
           setSending(false)
           if (!response?.success) {
-            setError(response?.error || 'Unable to send message')
+            const errorMessage = response?.error || 'Unable to send message'
+            setError(errorMessage)
+            showError(errorMessage)
           } else {
             setMessageText('')
           }
@@ -278,7 +282,9 @@ const MessagesPage = () => {
         setSending(false)
       }
     } catch (err) {
-      setError('Unable to send message. Please try again.')
+      const errorMessage = 'Unable to send message. Please try again.'
+      setError(errorMessage)
+      showError(errorMessage)
       setSending(false)
     }
   }

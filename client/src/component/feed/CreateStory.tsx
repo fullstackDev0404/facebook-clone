@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
 import { storiesApi } from '@/lib/api'
 import { initials, avatarSrc } from './feedUtils'
+import { useToast } from '@/hooks/useToast'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 
@@ -14,6 +15,7 @@ interface Props {
 
 const CreateStory = ({ onStoryCreated }: Props) => {
   const { user } = useAuth()
+  const { success, error: showError } = useToast()
   const [expanded, setExpanded] = useState(false)
   const [image, setImage] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -43,9 +45,14 @@ const CreateStory = ({ onStoryCreated }: Props) => {
     try {
       const data = await storiesApi.create(image)
       setImage(null); removeImage(); setExpanded(false)
-      if (data?.story) onStoryCreated(data.story)
+      if (data?.story) {
+        onStoryCreated(data.story)
+        success('Story created successfully!')
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create story.')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create story.'
+      setError(errorMessage)
+      showError(errorMessage)
     } finally { setLoading(false) }
   }
 

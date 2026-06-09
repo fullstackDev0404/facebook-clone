@@ -10,11 +10,13 @@ import MediaUploader, { MediaUploaderRef } from './CreatePost/MediaUploader'
 import TagPeoplePanel from './CreatePost/TagPeoplePanel'
 import FeelingPicker from './CreatePost/FeelingPicker'
 import PrivacySelector from './CreatePost/PrivacySelector'
+import { useToast } from '@/hooks/useToast'
 
 interface Props { onPostCreated: (post: PostRecord) => void }
 
 const CreatePost = ({ onPostCreated }: Props) => {
   const { user } = useAuth()
+  const { success, error: showError } = useToast()
   const [expanded, setExpanded]         = useState(false)
   const [content, setContent]           = useState('')
   const [file, setFile]                 = useState<File | null>(null)
@@ -86,9 +88,14 @@ const CreatePost = ({ onPostCreated }: Props) => {
       setExpanded(false)
       setShowFeelings(false)
       setShowTagPanel(false)
-      if (data?.post) onPostCreated(data.post)
+      if (data?.post) {
+        onPostCreated(data.post)
+        success('Post created successfully!')
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create post.')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create post.'
+      setError(errorMessage)
+      showError(errorMessage)
     } finally {
       setLoading(false)
     }

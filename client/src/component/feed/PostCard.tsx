@@ -1,6 +1,5 @@
 "use client"
 import React, { useEffect, useState, useRef } from 'react'
-import { toast } from 'sonner'
 import { ThumbsUp, MessageCircle, Share2 } from 'lucide-react'
 import { postsApi, moderationApi, blocksApi } from '@/lib/api'
 import { useAuth } from '@/context/AuthContext'
@@ -12,6 +11,7 @@ import PostContent from './PostCard/PostContent'
 import DeleteConfirmDialog from './PostCard/DeleteConfirmDialog'
 import ReportDialog from './PostCard/ReportDialog'
 import BlockDialog from './PostCard/BlockDialog'
+import { useToast } from '@/hooks/useToast'
 
 interface Props {
   post: PostRecord
@@ -21,6 +21,7 @@ interface Props {
 
 const PostCard = ({ post: initial, onDeleted, highlightQuery }: Props) => {
   const { user }                          = useAuth()
+  const { success, error: showError, info } = useToast()
 
   // Valid reaction types - must be declared before use
   const validTypes = ['like','love','haha','wow','sad','angry']
@@ -174,8 +175,11 @@ const PostCard = ({ post: initial, onDeleted, highlightQuery }: Props) => {
       setEditing(false)
       setEditImageFile(null)
       setEditVideoFile(null)
+      success('Post updated successfully!')
     } catch (e) {
-      setEditError(e instanceof Error ? e.message : 'Failed to save')
+      const errorMessage = e instanceof Error ? e.message : 'Failed to save'
+      setEditError(errorMessage)
+      showError(errorMessage)
     } finally { setSaving(false) }
   }
 
@@ -185,7 +189,12 @@ const PostCard = ({ post: initial, onDeleted, highlightQuery }: Props) => {
       await postsApi.delete(post.id)
       setDeleteOpen(false)
       onDeleted?.(post.id)
-    } catch { setDeleting(false) }
+      success('Post deleted successfully!')
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : 'Failed to delete post'
+      showError(errorMessage)
+      setDeleting(false)
+    }
   }
 
   const handleReport = async () => {
@@ -201,9 +210,10 @@ const PostCard = ({ post: initial, onDeleted, highlightQuery }: Props) => {
       setReportOpen(false)
       setReportReason('')
       setReportDescription('')
-      toast.success('Post reported successfully')
+      success('Post reported successfully')
     } catch (err) {
-      toast.error('Failed to report post')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to report post'
+      showError(errorMessage)
     } finally {
       setReporting(false)
     }
@@ -215,10 +225,11 @@ const PostCard = ({ post: initial, onDeleted, highlightQuery }: Props) => {
     try {
       await blocksApi.blockUser(post.author.id)
       setBlockOpen(false)
-      toast.success('User blocked successfully')
+      success('User blocked successfully')
       onDeleted?.(post.id)
     } catch (err) {
-      toast.error('Failed to block user')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to block user'
+      showError(errorMessage)
     } finally {
       setBlocking(false)
     }

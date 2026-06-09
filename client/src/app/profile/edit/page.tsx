@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useAuth } from '@/context/AuthContext'
 import { API_BASE_URL, STORAGE_KEYS } from '@/lib/constants'
 import { avatarSrc } from '@/component/feed/feedUtils'
+import { useToast } from '@/hooks/useToast'
 
 const getInitials = (name: string) =>
   name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
@@ -23,6 +24,7 @@ const formatDateForInput = (dateString?: string) => {
 export default function EditProfilePage() {
   const router = useRouter()
   const { user, login } = useAuth()
+  const { success, error: showError, info } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const coverPhotoInputRef = useRef<HTMLInputElement>(null)
 
@@ -187,13 +189,14 @@ export default function EditProfilePage() {
 
       const updatedUser = await response.json()
       login(updatedUser.user, localStorage.getItem(STORAGE_KEYS.TOKEN) || '')
-      setMessage({ type: 'success', text: 'Profile updated successfully!' })
+      success('Profile updated successfully!')
       
       setTimeout(() => {
         router.push(`/profile/${updatedUser.user.id}`)
       }, 1500)
     } catch (error) {
-      setMessage({ type: 'error', text: error instanceof Error ? error.message : 'Failed to update profile' })
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile'
+      showError(errorMessage)
     } finally {
       setSaving(false)
     }
