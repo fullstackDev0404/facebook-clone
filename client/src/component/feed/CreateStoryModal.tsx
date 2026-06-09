@@ -177,6 +177,12 @@ const CreateStoryModal = ({ open, onOpenChange, onStoryCreated }: Props) => {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSubmit()
+                }
+              }}
               placeholder="Write something…"
               maxLength={200}
               rows={2}

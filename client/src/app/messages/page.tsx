@@ -298,7 +298,7 @@ const MessagesPage = () => {
       <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
         <Header />
 
-        <div className="flex pt-14 w-full min-h-[calc(100vh-56px)]">
+        <div className="flex w-full min-h-[calc(100vh-56px)]">
           {showLeft && (
             <div className="w-60 shrink-0 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
               <LeftSidebar />

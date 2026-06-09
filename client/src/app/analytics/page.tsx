@@ -51,7 +51,7 @@ const AnalyticsPage = () => {
       <ProtectedRoute>
         <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
           <Header onMenuClick={() => setDrawerOpen(o => !o)} />
-          <div className="flex pt-14 w-full min-h-[calc(100vh-56px)]">
+          <div className="flex w-full min-h-[calc(100vh-56px)]">
             <main className="flex-1 min-w-0 py-5 px-4 sm:px-6 overflow-y-auto">
               <div className="flex items-center justify-center h-full">
                 <div className="w-8 h-8 border-4 border-[#1877f2] border-t-transparent rounded-full animate-spin" />
@@ -75,7 +75,7 @@ const AnalyticsPage = () => {
       <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
         <Header onMenuClick={() => setDrawerOpen(o => !o)} />
 
-        <div className="flex pt-14 w-full min-h-[calc(100vh-56px)]">
+        <div className="flex w-full min-h-[calc(100vh-56px)]">
           {showLeft && (
             <div className="w-60 shrink-0 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
               <LeftSidebar />
