@@ -3,6 +3,7 @@ import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import { Toaster } from 'sonner'
 import { ErrorBoundary } from '@/component/ErrorBoundary'
+import { register } from '@/lib/serviceWorker'
 
 export const metadata: Metadata = {
   title: 'Facebook',
@@ -10,6 +11,10 @@ export const metadata: Metadata = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  if (typeof window !== 'undefined') {
+    register()
+  }
+
   return (
     <html lang="en" className="h-full antialiased">
       <head>
