@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, lazy, Suspense } from 'react'
+import Image from 'next/image'
 import Header from '@/component/Header'
 import LeftSidebar from '@/component/LeftSidebar'
 import RightSidebar from '@/component/RightSidebar'
@@ -18,6 +19,8 @@ import {
   DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
+
+const LazyRightSidebar = lazy(() => import('@/component/RightSidebar'))
 
 type Tab = 'posts' | 'about' | 'friends' | 'photos'
 
@@ -159,10 +162,13 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
               <div className="overflow-hidden rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm">
                 <div className="relative h-56 bg-[#e4e6eb] dark:bg-[#1f1f1f]">
                   {coverUrl ? (
-                    <img
+                    <Image
                       src={coverUrl}
                       alt="Cover photo"
+                      width={1200}
+                      height={224}
                       className="object-cover w-full h-full"
+                      priority
                     />
                   ) : (
                     <div className="h-full w-full bg-gradient-to-br from-[#1877f2] via-[#3b82f6] to-[#85d7ff]" />
@@ -171,7 +177,7 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
                     <div className="relative -mb-12">
                       <div className="w-24 h-24 rounded-full border-4 border-white dark:border-[#18191a] overflow-hidden bg-[#f0f2f5] shadow-xl">
                         {avatarUrl ? (
-                          <img src={avatarUrl} alt="Avatar" className="object-cover w-full h-full" />
+                          <Image src={avatarUrl} alt="Avatar" width={96} height={96} className="object-cover w-full h-full" priority />
                         ) : (
                           <div className="flex items-center justify-center w-full h-full bg-[#1877f2] text-white text-2xl font-bold">
                             {profileName.split(' ').map((part) => part[0]).join('').slice(0, 2)}
@@ -294,7 +300,7 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
                               <div key={friendEntry.friend.id} className="flex items-center gap-3 p-4 rounded-3xl bg-[#f7f8f9] dark:bg-[#18191a]">
                                 <div className="w-12 h-12 rounded-full overflow-hidden bg-[#e4e6eb]">
                                   {friendEntry.friend.avatar ? (
-                                    <img src={avatarSrc(friendEntry.friend.avatar)} alt="Friend avatar" className="object-cover w-full h-full" />
+                                    <img src={avatarSrc(friendEntry.friend.avatar)} alt="Friend avatar" className="object-cover w-full h-full" loading="lazy" />
                                   ) : (
                                     <div className="flex items-center justify-center w-full h-full text-[#1877f2] font-semibold text-lg bg-white">
                                       {friendEntry.friend.firstName[0]}{friendEntry.friend.lastName[0]}
@@ -321,7 +327,7 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {photoPosts.map((post) => (
                               <div key={post.id} className="overflow-hidden rounded-3xl bg-[#f0f2f5]">
-                                <img src={avatarSrc(post.image)} alt="Post photo" className="object-cover w-full h-44" />
+                                <Image src={avatarSrc(post.image)} alt="Post photo" width={400} height={176} className="object-cover w-full h-44" loading="lazy" />
                               </div>
                             ))}
                           </div>
@@ -334,7 +340,11 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
             </div>
           </main>
 
-          {showRight && <RightSidebar />}
+          {showRight && (
+            <Suspense fallback={<div className="w-72" />}>
+              <LazyRightSidebar />
+            </Suspense>
+          )}
           <div aria-hidden="true" style={{ width: gutter, flexShrink: 0, minWidth: 0, transition: 'width 60ms linear' }} />
         </div>
       </div>

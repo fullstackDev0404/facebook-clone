@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, lazy, Suspense } from 'react'
 import Header        from '@/component/Header'
 import LeftSidebar   from '@/component/LeftSidebar'
 import RightSidebar  from '@/component/RightSidebar'
@@ -9,6 +9,9 @@ import ProtectedRoute from '@/component/ProtectedRoute'
 import EmailVerificationBanner from '@/component/EmailVerificationBanner'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS, HEADER_HEIGHT } from '@/lib/constants'
+
+const LazyRightSidebar = lazy(() => import('@/component/RightSidebar'))
+const LazyLiveInsights = lazy(() => import('@/component/LiveInsights'))
 
 const Homepage = () => {
   const vw = useViewport()
@@ -46,11 +49,17 @@ const Homepage = () => {
           </div>
 
           <main className="flex-1 min-w-0 py-5 px-6 overflow-y-auto">
-            <LiveInsights />
+            <Suspense fallback={<div className="h-20" />}>
+              <LazyLiveInsights />
+            </Suspense>
             <Feed />
           </main>
 
-          {showRight && <RightSidebar />}
+          {showRight && (
+            <Suspense fallback={<div className="w-72" />}>
+              <LazyRightSidebar />
+            </Suspense>
+          )}
 
           <div aria-hidden="true" style={{ width: gutter, flexShrink: 0, minWidth: 0, transition: 'width 60ms linear' }} />
         </div>

@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react'
+import { useEffect, useState, lazy, Suspense } from 'react'
 import { Users, UserPlus, UserCheck, Search, Loader2 } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 import ProtectedRoute    from '@/component/ProtectedRoute'
@@ -18,6 +18,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { avatarSrc } from '@/component/feed/feedUtils'
+
+const LazyRightSidebar = lazy(() => import('@/component/RightSidebar'))
+const LazyFriendSuggestions = lazy(() => import('@/component/friends/FriendSuggestions'))
 
 type Tab = 'friends' | 'requests' | 'suggestions' | 'search'
 
@@ -335,12 +338,20 @@ const FriendsPage = () => {
 
               {tab === 'friends'     && <FriendsList />}
               {tab === 'requests'    && <RequestsTab onCountChange={setRequestCount} />}
-              {tab === 'suggestions' && <FriendSuggestions />}
+              {tab === 'suggestions' && (
+                <Suspense fallback={<div className="h-40" />}>
+                  <LazyFriendSuggestions />
+                </Suspense>
+              )}
               {tab === 'search'      && <SearchTab />}
             </div>
           </main>
 
-          {showRight && <RightSidebar />}
+          {showRight && (
+            <Suspense fallback={<div className="w-72" />}>
+              <LazyRightSidebar />
+            </Suspense>
+          )}
 
           <div aria-hidden="true" style={{ width: gutter, flexShrink: 0, minWidth: 0, transition: 'width 60ms linear' }} />
         </div>

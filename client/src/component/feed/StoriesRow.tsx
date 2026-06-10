@@ -37,6 +37,7 @@ function StoryCard({ story, onClick, onDelete }: { story: StoryRecord; onClick?:
               src={avatarSrc(story.image)}
               alt={name}
               className="w-full h-full object-cover relative z-[1]"
+              loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
           </div>
@@ -53,6 +54,7 @@ function StoryCard({ story, onClick, onDelete }: { story: StoryRecord; onClick?:
                 src={avatarSrc(story.author.avatar)}
                 alt={name}
                 className="w-full h-full object-cover"
+                loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
               />
             ) : (
@@ -121,6 +123,7 @@ function CreateStoryCard({ user, onClick }: { user: { firstName: string; lastNam
               src={avatarSrc(user.avatar)}
               alt={name}
               className="w-full h-full object-cover"
+              loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
           ) : (

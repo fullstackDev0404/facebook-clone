@@ -326,7 +326,7 @@ const MessagesPage = () => {
                               >
                                 <div className="w-11 h-11 rounded-full overflow-hidden bg-[#e4e6eb] shrink-0">
                                   {contact.friend.avatar ? (
-                                    <img src={avatarSrc(contact.friend.avatar)} alt="Avatar" className="object-cover w-full h-full" />
+                                    <img src={avatarSrc(contact.friend.avatar)} alt="Avatar" className="object-cover w-full h-full" loading="lazy" />
                                   ) : (
                                     <div className="flex items-center justify-center w-full h-full bg-[#1877f2] text-white font-semibold">
                                       {contact.friend.firstName[0]}{contact.friend.lastName[0]}

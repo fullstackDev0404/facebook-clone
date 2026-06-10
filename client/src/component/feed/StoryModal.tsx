@@ -147,6 +147,7 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange, onStoryDeleted }:
                 src={imageUrl}
                 alt={authorName}
                 className="w-full h-full object-cover"
+                loading="lazy"
                 onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
               />
             )}
@@ -179,6 +180,7 @@ const StoryModal = ({ stories, startIndex, open, onOpenChange, onStoryDeleted }:
                     src={avatarSrc(story.author.avatar)}
                     alt={authorName}
                     className="w-full h-full object-cover"
+                    loading="lazy"
                     onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                   />
                 ) : authorInitials}

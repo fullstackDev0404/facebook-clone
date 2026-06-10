@@ -171,7 +171,7 @@ const SettingsPage = () => {
                         <div className="flex items-center gap-3">
                           <div className="w-12 h-12 rounded-full overflow-hidden bg-[#e4e6eb]">
                             {block.blocked.avatar ? (
-                              <img src={avatarSrc(block.blocked.avatar)} alt="Avatar" className="object-cover w-full h-full" />
+                              <img src={avatarSrc(block.blocked.avatar)} alt="Avatar" className="object-cover w-full h-full" loading="lazy" />
                             ) : (
                               <div className="flex items-center justify-center w-full h-full text-[#1877f2] font-semibold text-lg bg-white">
                                 {block.blocked.firstName[0]}{block.blocked.lastName[0]}
