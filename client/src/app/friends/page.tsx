@@ -286,7 +286,7 @@ const FriendsPage = () => {
       <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
         <Header onMenuClick={() => setDrawerOpen(o => !o)} />
 
-        <div className="flex w-full min-h-[calc(100vh-56px)]">
+        <div className="flex w-full min-h-[calc(100vh-104px)] pt-[56px]">
           {showLeft && (
             <div className="w-60 shrink-0 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
               <LeftSidebar />
@@ -306,7 +306,7 @@ const FriendsPage = () => {
             <LeftSidebar onClose={() => setDrawerOpen(false)} showCloseButton />
           </div>
 
-          <main className="flex-1 min-w-0 py-5 px-4 sm:px-6 overflow-y-auto">
+          <main className="flex-1 min-w-0 py-5 px-6 overflow-y-auto">
             <div className="max-w-3xl mx-auto">
               <h1 className="text-[24px] font-bold text-[#050505] dark:text-[#e4e6eb] mb-6">Friends</h1>
 

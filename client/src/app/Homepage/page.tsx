@@ -24,10 +24,10 @@ const Homepage = () => {
         <EmailVerificationBanner />
         <Header onMenuClick={() => setDrawerOpen(o => !o)} />
 
-        <div className="flex w-full min-h-[calc(100vh-56px)]">
+        <div className="flex w-full min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-56px)] pt-[56px]">
 
           {showLeft && (
-            <div className="w-60 shrink-0 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
+            <div className="hidden md:flex w-60 shrink-0 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
               <LeftSidebar />
             </div>
           )}
@@ -45,7 +45,7 @@ const Homepage = () => {
             <LeftSidebar onClose={() => setDrawerOpen(false)} showCloseButton />
           </div>
 
-          <main className="flex-1 min-w-0 py-5 px-4 sm:px-6 overflow-y-auto">
+          <main className="flex-1 min-w-0 py-5 px-6 overflow-y-auto">
             <LiveInsights />
             <Feed />
           </main>

@@ -31,7 +31,7 @@ const Navigation = ({ activeNav, onNavClick, isMobile = false }: Props) => {
           >
             <Icon className="w-6 h-6" strokeWidth={activeNav === label ? 2.5 : 2} />
             {activeNav === label && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.75 bg-[#1877f2] rounded-t-sm" />
+              <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1877f2] rounded-t-sm" />
             )}
           </button>
         ))}
@@ -54,7 +54,7 @@ const Navigation = ({ activeNav, onNavClick, isMobile = false }: Props) => {
         >
           <Icon className="w-6 h-6" strokeWidth={activeNav === label ? 2.5 : 2} />
           {activeNav === label && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.75 bg-[#1877f2] rounded-t-sm" />
+            <span className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#1877f2] rounded-t-sm" />
           )}
           <span className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-[#1c1e21] text-white text-[11px] px-2 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-lg z-50">
             {label}

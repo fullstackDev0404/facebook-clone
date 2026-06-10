@@ -270,7 +270,9 @@ const Header = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             </div>
 
             {/* ── MOBILE ROW 2: Nav icons ── */}
-            <Navigation activeNav={activeNav} onNavClick={handleNavClick} isMobile />
+            <div className="md:hidden">
+              <Navigation activeNav={activeNav} onNavClick={handleNavClick} isMobile />
+            </div>
         </header>
     )
 }

@@ -298,15 +298,10 @@ const MessagesPage = () => {
       <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
         <Header />
 
-        <div className="flex w-full min-h-[calc(100vh-56px)]">
-          {showLeft && (
-            <div className="w-60 shrink-0 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
-              <LeftSidebar />
-            </div>
-          )}
+        <div className="flex w-full min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-56px)]">
 
-          <main className="flex-1 min-w-0 py-5 px-4 sm:px-6">
-            <div className="max-w-6xl mx-auto h-[calc(100vh-56px-40px)]">
+          <main className="flex-1 min-w-0 py-5 px-6">
+            <div className="max-w-7xl mx-auto h-[calc(100vh-104px-40px)] md:h-[calc(100vh-56px-40px)]">
               <div className="rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] shadow-sm overflow-hidden h-full">
                 <div className="flex flex-col md:flex-row md:items-stretch h-full">
                   <div className="md:w-80 border-b border-[#f0f2f5] dark:border-[#3e4042] md:border-b-0 md:border-r flex flex-col">
@@ -434,9 +429,6 @@ const MessagesPage = () => {
               </div>
             </div>
           </main>
-
-          {showRight && <RightSidebar />}
-          <div aria-hidden="true" style={{ width: gutter, flexShrink: 0, minWidth: 0, transition: 'width 60ms linear' }} />
         </div>
       </div>
     </ProtectedRoute>
