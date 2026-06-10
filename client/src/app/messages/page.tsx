@@ -5,17 +5,16 @@ import Header from '@/component/Header'
 import LeftSidebar from '@/component/LeftSidebar'
 import RightSidebar from '@/component/RightSidebar'
 import ProtectedRoute from '@/component/ProtectedRoute'
+import { ContactList } from '@/component/messages/ContactList'
+import { ChatArea } from '@/component/messages/ChatArea'
+import { MessageInput } from '@/component/messages/MessageInput'
+import { ChatHeader } from '@/component/messages/ChatHeader'
 import { useAuth } from '@/context/AuthContext'
 import { friendsApi, messagesApi, notificationsApi, type FriendEntry, type MessageRecord } from '@/lib/api'
 import { connectSocket, disconnectSocket } from '@/lib/socket'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS } from '@/lib/constants'
-import { avatarSrc } from '@/component/feed/feedUtils'
-import { Check } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
-
-const formatTime = (iso: string) =>
-  new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 
 const MessagesPage = () => {
   const { user } = useAuth()
@@ -310,120 +309,41 @@ const MessagesPage = () => {
                       <p className="text-[13px] text-[#65676b] mt-1">Select a friend to start chatting.</p>
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                      {contacts.length === 0 ? (
-                        <div className="p-6 text-center text-[#65676b]">
-                          No friends found. Add friends to start conversations.
-                        </div>
-                      ) : (
-                        <div className="space-y-1 p-3">
-                          {contacts.map((contact) => {
-                            const active = contact.friend.id === selectedContact?.friend.id
-                            return (
-                              <button
-                                key={contact.friend.id}
-                                onClick={() => setSelectedContactId(contact.friend.id)}
-                                className={`flex items-center gap-3 w-full text-left rounded-3xl px-3 py-3 transition-colors ${active ? 'bg-[#e7f3ff] text-[#050505]' : 'hover:bg-[#f0f2f5] dark:hover:bg-[#242526]'}`}
-                              >
-                                <div className="w-11 h-11 rounded-full overflow-hidden bg-[#e4e6eb] shrink-0">
-                                  {contact.friend.avatar ? (
-                                    <img src={avatarSrc(contact.friend.avatar)} alt="Avatar" className="object-cover w-full h-full" loading="lazy" />
-                                  ) : (
-                                    <div className="flex items-center justify-center w-full h-full bg-[#1877f2] text-white font-semibold">
-                                      {contact.friend.firstName[0]}{contact.friend.lastName[0]}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="font-semibold text-[15px] text-[#050505] truncate">{contact.friend.firstName} {contact.friend.lastName}</p>
-                                  <p className="text-[13px] text-[#65676b] truncate">
-                                    {contact.lastMessage 
-                                      ? (contact.lastMessage.senderId === user.id ? 'You: ' : '') + contact.lastMessage.content
-                                      : (contact.since ? `Friends since ${new Date(contact.since).toLocaleDateString()}` : 'Friend')
-                                    }
-                                  </p>
-                                </div>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )}
+                      <ContactList
+                        contacts={contacts}
+                        selectedContactId={selectedContact?.friend.id ?? null}
+                        onSelectContact={setSelectedContactId}
+                        currentUserId={user.id}
+                      />
                     </div>
                   </div>
 
                   <div className="flex-1 flex flex-col min-h-0">
-                    <div className="px-5 py-5 border-b border-[#f0f2f5] dark:border-[#3e4042] flex items-center justify-between shrink-0">
-                      <div>
-                        <p className="text-[18px] font-semibold text-[#050505]">{selectedContact ? `${selectedContact.friend.firstName} ${selectedContact.friend.lastName}` : 'No chat selected'}</p>
-                        <p className="text-[13px] text-[#65676b]">
-                          {typingUser ? `${typingUser.senderName} is typing...` : (socketConnected ? 'Live chat connected' : 'Connecting…')}
-                        </p>
-                      </div>
-                    </div>
+                    <ChatHeader
+                      selectedContact={selectedContact}
+                      typingUser={typingUser}
+                      socketConnected={socketConnected}
+                    />
                     <div className="flex-1 overflow-y-auto px-5 py-4 bg-[#f7f8f9] dark:bg-[#18191a]">
-                      {loading ? (
-                        <div className="text-[#65676b]">Loading conversation…</div>
-                      ) : chatError ? (
-                        <div className="rounded-3xl bg-red-50 dark:bg-[#3a1f1f] p-6 text-red-700">{chatError}</div>
-                      ) : selectedContact ? (
-                        <div className="space-y-3">
-                          {messages.length === 0 ? (
-                            <div className="p-8 rounded-3xl bg-white dark:bg-[#242526] border border-[#ced0d4] dark:border-[#3e4042] text-center text-[#65676b]">
-                              Start the conversation by sending a message.
-                            </div>
-                          ) : messages.map((message) => {
-                            const mine = message.sender.id === user.id
-                            return (
-                              <div 
-                                key={message.id} 
-                                ref={(el) => {
-                                  if (el) messageRefs.current.set(message.id, el)
-                                  else messageRefs.current.delete(message.id)
-                                }}
-                                className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
-                              >
-                                <div className={`max-w-[80%] rounded-3xl px-4 py-3 shadow-sm ${mine ? 'bg-[#1877f2] text-white' : 'bg-white dark:bg-[#242526] text-[#050505]'}`}>
-                                  <p className="text-[14px] leading-6 whitespace-pre-wrap">{message.content}</p>
-                                  <div className={`mt-2 flex items-center gap-1 ${mine ? 'justify-end' : 'justify-start'}`}>
-                                    <p className={`text-[11px] ${mine ? 'text-[#dbe9ff]' : 'text-[#6b7280]'}`}>{formatTime(message.createdAt)}</p>
-                                    {mine && (
-                                      <span className="flex items-center relative">
-                                        <Check size={14} className="text-[#dbe9ff]" />
-                                        {message.read && <Check size={14} className="text-[#dbe9ff] -ml-2.5" />}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                          <div ref={chatEndRef} />
-                        </div>
-                      ) : (
-                        <div className="text-[#65676b]">Select a chat on the left to view messages.</div>
-                      )}
+                      <ChatArea
+                        messages={messages}
+                        loading={loading}
+                        chatError={chatError}
+                        selectedContact={selectedContact}
+                        currentUserId={user.id}
+                        messageRefs={messageRefs}
+                        chatEndRef={chatEndRef}
+                      />
                     </div>
-
-                    <div className="px-5 py-4 border-t border-[#f0f2f5] dark:border-[#3e4042] bg-white dark:bg-[#242526]">
-                      <div className="flex items-center gap-3">
-                        <input
-                          value={messageText}
-                          onChange={(event) => setMessageText(event.target.value)}
-                          onKeyDown={(event) => event.key === 'Enter' && !event.shiftKey && (event.preventDefault(), handleSend())}
-                          placeholder={selectedContact ? 'Write a message...' : 'Select a chat first.'}
-                          disabled={!selectedContact}
-                          className="flex-1 px-4 py-3 rounded-3xl border border-[#ced0d4] dark:border-[#3e4042] bg-[#f7f8f9] dark:bg-[#18191a] text-[14px] text-[#050505] focus:border-[#1877f2] focus:outline-none"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleSend}
-                          disabled={!selectedContact || sending || !messageText.trim()}
-                          className="px-4 py-3 rounded-3xl bg-[#1877f2] text-white font-semibold disabled:opacity-60"
-                        >
-                          Send
-                        </button>
-                      </div>
-                      {error && <p className="mt-2 text-[13px] text-red-600">{error}</p>}
-                    </div>
+                    <MessageInput
+                      messageText={messageText}
+                      onMessageTextChange={setMessageText}
+                      onSend={handleSend}
+                      disabled={!selectedContact}
+                      sending={sending}
+                      error={error}
+                      placeholder={selectedContact ? 'Write a message...' : 'Select a chat first.'}
+                    />
                   </div>
                 </div>
               </div>

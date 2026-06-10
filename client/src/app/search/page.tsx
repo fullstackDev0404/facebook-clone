@@ -93,25 +93,6 @@ const SearchPage = () => {
     window.location.href = `/profile/${userId}`
   }
 
-  const handlePostClick = (postId: string) => {
-    window.location.href = `/`
-  }
-
-  const highlightText = (text: string, query: string) => {
-    if (!query.trim()) return text
-    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-    const parts = text.split(regex)
-    return parts.map((part, i) => 
-      regex.test(part) ? (
-        <mark key={i} className="bg-yellow-200 dark:bg-yellow-600 px-1 rounded">
-          {part}
-        </mark>
-      ) : (
-        part
-      )
-    )
-  }
-
   const handleAddFriend = async (userId: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setSendingRequest(prev => new Set(prev).add(userId))
