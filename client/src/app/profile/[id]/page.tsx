@@ -149,7 +149,7 @@ const ProfilePage = ({ params }: { params: Promise<{ id: string }> }) => {
           </DialogContent>
         </Dialog>
 
-        <div className="flex w-full min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-56px)] pt-[56px]">
+        <div className="flex w-full min-h-[calc(100vh-104px)] md:min-h-[calc(100vh-56px)]">
           {showLeft && (
             <div className="hidden md:flex w-60 shrink-0 sticky top-14 h-[calc(100vh-56px)] overflow-y-auto">
               <LeftSidebar />
