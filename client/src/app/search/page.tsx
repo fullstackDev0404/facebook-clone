@@ -14,12 +14,14 @@ import { SearchHeader } from '@/component/search/SearchHeader'
 import { UserResultCard } from '@/component/search/UserResultCard'
 import { PostResultSection } from '@/component/search/PostResultSection'
 import { useSearch } from '@/hooks/useSearch'
+import { MobileSidebarDrawer } from '@/component/layout/MobileSidebarDrawer'
 
 const SearchPage = () => {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
   const [activeTab, setActiveTab] = useState<'all' | 'people' | 'posts'>('all')
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const search = useSearch(query, activeTab)
 
@@ -44,7 +46,7 @@ const SearchPage = () => {
   return (
     <ProtectedRoute>
       <div className="flex flex-col min-h-screen bg-[#f0f2f5] dark:bg-[#18191a]">
-        <Header />
+        <Header onMenuClick={() => setDrawerOpen(o => !o)} />
 
         <div className="flex w-full min-h-[calc(100vh-104px)] pt-[56px]">
           {showLeft && (
@@ -52,6 +54,8 @@ const SearchPage = () => {
               <LeftSidebar />
             </div>
           )}
+
+          <MobileSidebarDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} showLeft={showLeft} />
 
           <main className="flex-1 min-w-0 py-5 px-4 sm:px-6">
             <div className="max-w-4xl mx-auto">

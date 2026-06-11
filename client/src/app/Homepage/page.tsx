@@ -7,6 +7,7 @@ import LiveInsights  from '@/component/LiveInsights'
 import Feed          from '@/component/Feed'
 import ProtectedRoute from '@/component/ProtectedRoute'
 import EmailVerificationBanner from '@/component/EmailVerificationBanner'
+import { MobileSidebarDrawer } from '@/component/layout/MobileSidebarDrawer'
 import { useViewport, calcGutter } from '@/hooks/useViewport'
 import { BREAKPOINTS, HEADER_HEIGHT } from '@/lib/constants'
 
@@ -35,18 +36,7 @@ const Homepage = () => {
             </div>
           )}
 
-          {/* Mobile drawer */}
-          <div
-            className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
-              drawerOpen && !showLeft ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-            }`}
-            onClick={() => setDrawerOpen(false)}
-          />
-          <div className={`fixed top-0 left-0 z-50 h-full w-72 bg-white dark:bg-[#242526] shadow-2xl transition-transform duration-300 ease-in-out ${
-            drawerOpen && !showLeft ? 'translate-x-0' : '-translate-x-full'
-          }`}>
-            <LeftSidebar onClose={() => setDrawerOpen(false)} showCloseButton />
-          </div>
+          <MobileSidebarDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} showLeft={showLeft} />
 
           <main className="flex-1 min-w-0 py-5 px-6 overflow-y-auto">
             <Suspense fallback={<div className="h-20" />}>
