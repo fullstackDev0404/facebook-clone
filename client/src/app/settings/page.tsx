@@ -15,6 +15,7 @@ import { BlockedUsersSection } from '@/component/settings/BlockedUsersSection'
 import { SettingsSection } from '@/component/settings/SettingsSection'
 import { useSettings } from '@/hooks/useSettings'
 import { MobileSidebarDrawer } from '@/component/layout/MobileSidebarDrawer'
+import PrivacySettings from '@/component/settings/PrivacySettings'
 
 const SettingsPage = () => {
   const { user } = useAuth()
@@ -59,15 +60,9 @@ const SettingsPage = () => {
                 onUnblockClick={settings.openUnblockDialog}
               />
 
-              {/* Placeholder for other settings sections */}
-              <SettingsSection
-                icon={Shield}
-                title="Privacy"
-                description="Manage your privacy settings"
-                iconBgColor="bg-[#e7f3ff]"
-                iconColor="text-[#1877f2]"
-              />
+              <PrivacySettings />
 
+              {/* Placeholder for other settings sections */}
               <SettingsSection
                 icon={Bell}
                 title="Notifications"

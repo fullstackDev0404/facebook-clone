@@ -8,3 +8,19 @@
 {"timestamp":"00:10:58.598","source":"Browser","level":"ERROR","message":"Application error: \"\\u001b[31mChunkLoadError: Failed to load chunk /_next/static/chunks/node_modules_0-bc940._.js from module [project]/node_modules/next/dist/compiled/react-server-dom-turbopack/cjs/react-server-dom-turbopack-client.browser.development.js [app-client] (ecmascript)\\u001b[39m\" \"\\u001b[2m(file://D:/Work_Floder/8_facebook_clone/client/.next/dev/static/chunks/src_025rf9e._.js:175:25)\\u001b[22m\""}
 {"timestamp":"00:11:02.150","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
 {"timestamp":"00:11:55.420","source":"Server","level":"LOG","message":"✓ Compiled in 719ms"}
+{"timestamp":"06:23:27.021","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"08:51:38.904","source":"Server","level":"LOG","message":"✓ Compiled in 3.9s"}
+{"timestamp":"09:56:55.085","source":"Server","level":"LOG","message":"✓ Compiled in 798ms"}
+{"timestamp":"09:56:56.802","source":"Server","level":"LOG","message":"✓ Compiled in 250ms"}
+{"timestamp":"09:57:34.572","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"09:58:18.875","source":"Server","level":"LOG","message":"✓ Compiled in 98ms"}
+{"timestamp":"09:58:43.982","source":"Browser","level":"INFO","message":"%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold"}
+{"timestamp":"09:58:45.089","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:47.487","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:48.232","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:48.627","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:49.263","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:49.773","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:50.519","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:50.867","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
+{"timestamp":"09:58:51.204","source":"Browser","level":"LOG","message":"Backend sync failed, using local storage"}
