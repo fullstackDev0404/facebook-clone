@@ -62,15 +62,9 @@ const SettingsPage = () => {
 
               <PrivacySettings />
 
-              {/* Placeholder for other settings sections */}
-              <SettingsSection
-                icon={Bell}
-                title="Notifications"
-                description="Manage your notification preferences"
-                iconBgColor="bg-[#ede9fe]"
-                iconColor="text-[#7c3aed]"
-              />
+              <NotificationSettings />
 
+              {/* Placeholder for other settings sections */}
               <SettingsSection
                 icon={Lock}
                 title="Security"
